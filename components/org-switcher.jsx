@@ -1,12 +1,12 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import {
   OrganizationSwitcher,
   SignedIn,
   useOrganization,
   useUser,
 } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 
 const OrgSwitcher = () => {
   const { isLoaded } = useOrganization();
