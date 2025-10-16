@@ -1,0 +1,6 @@
+{
+    "extends": "next/core-web-vitals",
+    // "roles":{
+    //     "no-unused-vars":["warn"]
+    // }
+}
