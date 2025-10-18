@@ -1,7 +1,7 @@
-import { Suspense } from "react";
-import { getUserIssues } from "@/actions/organizations";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getUserIssues } from "@/actions/organization";
 import IssueCard from "@/components/issue-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Suspense } from "react";
 
 export default async function UserIssues({ userId }) {
   const issues = await getUserIssues(userId);

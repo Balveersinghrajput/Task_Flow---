@@ -3,27 +3,27 @@
 import { db } from "@/lib/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
+// ✅ Create a new project
 export async function createProject(data) {
-  const { userId, orgId } = auth();
+  const { userId, orgId: activeOrgId } = auth();
+  const orgId = data.orgId || activeOrgId;
 
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
+  if (!userId) throw new Error("Unauthorized");
 
   if (!orgId) {
-    throw new Error("No Organization Selected");
+    throw new Error("No Organization Selected. Please select an organization first.");
   }
 
-  // Check if the user is an admin of the organization
-  const {data: membership} = await clerkClient().organizations.getOrganizationMembershipList({
+  // Get organization membership list
+  const membershipList = await clerkClient.organizations.getOrganizationMembershipList({
     organizationId: orgId,
   });
 
-  const userMembership = membership.find(
+  const userMembership = membershipList.data.find(
     (member) => member.publicUserData.userId === userId
   );
 
-  if (!userMembership || userMembership.role !== "org:admin") {
+  if (!userMembership || (userMembership.role !== "admin" && userMembership.role !== "org:admin")) {
     throw new Error("Only organization admins can create projects");
   }
 
@@ -36,68 +36,32 @@ export async function createProject(data) {
         organizationId: orgId,
       },
     });
-
     return project;
   } catch (error) {
+    if (error.code === "P2002") {
+      throw new Error("Project key already exists in this organization.");
+    }
     throw new Error("Error creating project: " + error.message);
   }
 }
 
-export async function getProject(projectId) {
-  const { userId, orgId } = auth();
-
-  if (!userId || !orgId) {
-    throw new Error("Unauthorized");
-  }
-
-  // Find user to verify existence
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  // Get project with sprints
-  const project = await db.project.findUnique({
-    where: { id: projectId },
-    include: {
-      sprints: {
-        orderBy: { createdAt: "desc" },
-      },
-    },
-  });
-
-  if (!project) {
-    throw new Error("Project not found");
-  }
-
-  // Verify project belongs to the organization
-  if (project.organizationId !== orgId) {
-    return null;
-  }
-
-  return project;
-}
-
+// ✅ Delete project
 export async function deleteProject(projectId) {
-  const { userId, orgId } = auth();
+  const { userId, orgId: activeOrgId } = auth();
 
-  if (!userId || !orgId) {
+  if (!userId || !activeOrgId) {
     throw new Error("Unauthorized");
   }
 
-  // Verify the user is admin
   const membershipList = await clerkClient.organizations.getOrganizationMembershipList({
-    organizationId: orgId,
+    organizationId: activeOrgId,
   });
 
   const userMembership = membershipList.data.find(
-    (membership) => membership.publicUserData.userId === userId
+    (member) => member.publicUserData.userId === userId
   );
 
-  if (!userMembership || userMembership.role !== "admin") {
+  if (!userMembership || (userMembership.role !== "admin" && userMembership.role !== "org:admin")) {
     throw new Error("Only organization admins can delete projects");
   }
 
@@ -105,10 +69,8 @@ export async function deleteProject(projectId) {
     where: { id: projectId },
   });
 
-  if (!project || project.organizationId !== orgId) {
-    throw new Error(
-      "Project not found or you don't have permission to delete it"
-    );
+  if (!project || project.organizationId !== activeOrgId) {
+    throw new Error("Project not found or permission denied");
   }
 
   await db.project.delete({
@@ -116,4 +78,21 @@ export async function deleteProject(projectId) {
   });
 
   return { success: true };
+}
+
+// ✅ Get project by ID
+export async function getProject(projectId) {
+  try {
+    const project = await db.project.findUnique({
+      where: { id: projectId },
+      include: {
+        sprints: true, // include sprints for your SprintBoard
+      },
+    });
+
+    return project;
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    return null;
+  }
 }

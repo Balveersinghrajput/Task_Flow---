@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
-import { BarLoader } from "react-spinners";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { createIssue } from "@/actions/issues";
+import { getOrganizationUsers } from "@/actions/organization";
+import { issueSchema } from "@/app/lib/validators";
+import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
@@ -11,7 +11,6 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -19,11 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import MDEditor from "@uiw/react-md-editor";
 import useFetch from "@/hooks/use-fetch";
-import { createIssue } from "@/actions/issues";
-import { getOrganizationUsers } from "@/actions/organizations";
-import { issueSchema } from "@/app/lib/validators";
+import { zodResolver } from "@hookform/resolvers/zod";
+import MDEditor from "@uiw/react-md-editor";
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { BarLoader } from "react-spinners";
 
 export default function IssueCreationDrawer({
   isOpen,

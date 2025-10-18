@@ -3,60 +3,43 @@
 import { db } from "@/lib/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
-export async function getOrganization(slug) {
+// Get organization by ID and check if user is a member
+export async function getOrganization(orgId) {
   const { userId } = auth();
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
+  if (!userId) throw new Error("Unauthorized");
 
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
+  // Get organization details
+  const organization = await clerkClient.organizations.getOrganization({
+    organizationId: orgId,
   });
 
-  if (!user) {
-    throw new Error("User not found");
-  }
+  if (!organization) return null;
 
-  // Get the organization details
-  const organization = await clerkClient().organizations.getOrganization({
-    slug,
-  });
-
-  if (!organization) {
-    return null;
-  }
-
-  // Check if user belongs to this organization
-  const { data: membership } =
-    await clerkClient().organizations.getOrganizationMembershipList({
-      organizationId: organization.id,
+  // Check membership
+  const membershipList =
+    await clerkClient.organizations.getOrganizationMembershipList({
+      organizationId: orgId,
     });
 
-  const userMembership = membership.find(
+  const userMembership = membershipList.data.find(
     (member) => member.publicUserData.userId === userId
   );
 
-  // If user is not a member, return null
-  if (!userMembership) {
-    return null;
-  }
+  if (!userMembership) return null;
 
   return organization;
 }
 
+// Get all projects for an organization
 export async function getProjects(orgId) {
   const { userId } = auth();
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
+  if (!userId) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
   });
 
-  if (!user) {
-    throw new Error("User not found");
-  }
+  if (!user) throw new Error("User not found");
 
   const projects = await db.project.findMany({
     where: { organizationId: orgId },
@@ -66,27 +49,21 @@ export async function getProjects(orgId) {
   return projects;
 }
 
+// Get issues assigned to or reported by a user
 export async function getUserIssues(userId) {
   const { orgId } = auth();
-
-  if (!userId || !orgId) {
-    throw new Error("No user id or organization id found");
-  }
+  if (!userId || !orgId) throw new Error("No user id or organization id found");
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
   });
 
-  if (!user) {
-    throw new Error("User not found");
-  }
+  if (!user) throw new Error("User not found");
 
   const issues = await db.issue.findMany({
     where: {
       OR: [{ assigneeId: user.id }, { reporterId: user.id }],
-      project: {
-        organizationId: orgId,
-      },
+      project: { organizationId: orgId },
     },
     include: {
       project: true,
@@ -99,22 +76,19 @@ export async function getUserIssues(userId) {
   return issues;
 }
 
+// Get all users in an organization
 export async function getOrganizationUsers(orgId) {
   const { userId } = auth();
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
+  if (!userId) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
   });
 
-  if (!user) {
-    throw new Error("User not found");
-  }
+  if (!user) throw new Error("User not found");
 
   const organizationMemberships =
-    await clerkClient().organizations.getOrganizationMembershipList({
+    await clerkClient.organizations.getOrganizationMembershipList({
       organizationId: orgId,
     });
 
@@ -123,11 +97,7 @@ export async function getOrganizationUsers(orgId) {
   );
 
   const users = await db.user.findMany({
-    where: {
-      clerkUserId: {
-        in: userIds,
-      },
-    },
+    where: { clerkUserId: { in: userIds } },
   });
 
   return users;

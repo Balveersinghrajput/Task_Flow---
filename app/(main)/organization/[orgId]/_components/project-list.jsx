@@ -1,7 +1,7 @@
 // components/ProjectList.jsx
+import { getProjects } from "@/actions/organization";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { getProjects } from "@/actions/organizations";
 import DeleteProject from "./delete-project";
 
 export default async function ProjectList({ orgId }) {
