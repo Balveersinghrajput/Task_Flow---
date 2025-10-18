@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -10,9 +9,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import IssueDetailsDialog from "./issue-details-dialog";
 import UserAvatar from "./user-avatar";
-import { useRouter } from "next/navigation";
 
 const priorityColor = {
   LOW: "border-green-600",
@@ -30,6 +30,34 @@ export default function IssueCard({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
 
+  // Ensure issue data is safe to use
+  const safeIssue = issue ? {
+    id: issue.id,
+    title: issue.title || 'Untitled',
+    description: issue.description || '',
+    status: issue.status || 'TODO',
+    priority: issue.priority || 'MEDIUM',
+    createdAt: issue.createdAt,
+    projectId: issue.projectId,
+    sprintId: issue.sprintId,
+    assignee: issue.assignee ? {
+      id: issue.assignee.id,
+      name: issue.assignee.name || 'Unknown',
+      imageUrl: issue.assignee.imageUrl || null,
+      clerkUserId: issue.assignee.clerkUserId
+    } : null,
+    reporter: issue.reporter ? {
+      id: issue.reporter.id,
+      name: issue.reporter.name || 'Unknown',
+      imageUrl: issue.reporter.imageUrl || null,
+      clerkUserId: issue.reporter.clerkUserId
+    } : null
+  } : null;
+
+  if (!safeIssue) {
+    return null;
+  }
+
   const onDeleteHandler = (...params) => {
     router.refresh();
     onDelete(...params);
@@ -40,9 +68,9 @@ export default function IssueCard({
     onUpdate(...params);
   };
 
-  const created = formatDistanceToNow(new Date(issue.createdAt), {
+  const created = safeIssue.createdAt ? formatDistanceToNow(new Date(safeIssue.createdAt), {
     addSuffix: true,
-  });
+  }) : 'Unknown';
 
   return (
     <>
@@ -51,19 +79,19 @@ export default function IssueCard({
         onClick={() => setIsDialogOpen(true)}
       >
         <CardHeader
-          className={`border-t-2 ${priorityColor[issue.priority]} rounded-lg`}
+          className={`border-t-2 ${priorityColor[safeIssue.priority]} rounded-lg`}
         >
-          <CardTitle>{issue.title}</CardTitle>
+          <CardTitle>{safeIssue.title}</CardTitle>
         </CardHeader>
 
         <CardContent className="flex gap-2 -mt-3">
-          {showStatus && <Badge>{issue.status}</Badge>}
+          {showStatus && <Badge>{safeIssue.status}</Badge>}
           <Badge variant="outline" className="-ml-1">
-            {issue.priority}
+            {safeIssue.priority}
           </Badge>
         </CardContent>
         <CardFooter className="flex flex-col items-start space-y-3">
-          <UserAvatar user={issue.assignee} />
+          <UserAvatar user={safeIssue.assignee} />
 
           <div className="text-xs text-gray-400 w-full">Created {created}</div>
         </CardFooter>
@@ -73,10 +101,10 @@ export default function IssueCard({
         <IssueDetailsDialog
           isOpen={isDialogOpen}
           onClose={() => setIsDialogOpen(false)}
-          issue={issue}
+          issue={safeIssue}
           onDelete={onDeleteHandler}
           onUpdate={onUpdateHandler}
-          borderCol={priorityColor[issue.priority]}
+          borderCol={priorityColor[safeIssue.priority]}
         />
       )}
     </>

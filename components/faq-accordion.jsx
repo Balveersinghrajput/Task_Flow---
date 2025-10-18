@@ -6,6 +6,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useEffect, useState } from "react";
 
 const faqs = [
   {
@@ -41,6 +42,25 @@ const faqs = [
 ];
 
 export default function FAQAccordion() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="w-full space-y-4">
+        {faqs.map((faq, index) => (
+          <div key={`faq-skeleton-${index}`} className="border-b pb-4">
+            <div className="h-6 bg-gray-700 rounded animate-pulse mb-2"></div>
+            <div className="h-4 bg-gray-600 rounded animate-pulse w-3/4"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <Accordion type="single" collapsible className="w-full">
       {faqs.map((faq, index) => (

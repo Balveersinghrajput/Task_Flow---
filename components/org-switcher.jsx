@@ -29,8 +29,8 @@ const OrgSwitcher = () => {
           createOrganizationMode={
             pathname === "/onboarding" ? "navigation" : "modal"
           }
-          afterCreateOrganizationUrl="/organization/:slug"
-          afterSelectOrganizationUrl="/organization/:slug"
+          afterCreateOrganizationUrl={(org) => `/organization/${org.id}`}
+          afterSelectOrganizationUrl={(org) => `/organization/${org.id}`}
           createOrganizationUrl="/onboarding"
           appearance={{
             elements: {

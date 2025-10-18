@@ -1,4 +1,5 @@
 import { getProject } from "@/actions/projects";
+import { serializeDates } from "@/lib/serialization";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BarLoader } from "react-spinners";
@@ -38,7 +39,7 @@ export default async function ProjectPage({ params }) {
 
         {project.sprints && project.sprints.length > 0 ? (
           <SprintBoard
-            sprints={project.sprints}
+            sprints={serializeDates(project.sprints)}
             projectId={projectId}
             orgId={project.organizationId}
           />

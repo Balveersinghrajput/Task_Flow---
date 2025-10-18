@@ -1,11 +1,12 @@
 "use server";
 
 import { db } from "@/lib/prisma";
+import { ultraSerialize } from "@/lib/serialization";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
 // ✅ Create a new project
 export async function createProject(data) {
-  const { userId, orgId: activeOrgId } = auth();
+  const { userId, orgId: activeOrgId } = await auth();
   const orgId = data.orgId || activeOrgId;
 
   if (!userId) throw new Error("Unauthorized");
@@ -15,7 +16,8 @@ export async function createProject(data) {
   }
 
   // Get organization membership list
-  const membershipList = await clerkClient.organizations.getOrganizationMembershipList({
+  const client = await clerkClient();
+  const membershipList = await client.organizations.getOrganizationMembershipList({
     organizationId: orgId,
   });
 
@@ -48,12 +50,13 @@ export async function createProject(data) {
         organizationId: orgId,
       },
     });
-    return project;
+
+    return ultraSerialize(project);
   } catch (error) {
     if (error.code === "P2002") {
       throw new Error(`Project key "${data.key}" already exists in this organization. Please choose a different key.`);
     }
-    // Re-throw our custom error messages
+    // Re-throw custom error messages
     if (error.message.includes("already exists")) {
       throw error;
     }
@@ -61,45 +64,73 @@ export async function createProject(data) {
   }
 }
 
-// ✅ Delete project
-export async function deleteProject(projectId) {
-  const { userId, orgId: activeOrgId } = auth();
+// ✅ Delete project - NOW ACCEPTS orgId as parameter
+export async function deleteProject(projectId, orgId) {
+  try {
+    const { userId, orgRole } = await auth();
 
-  if (!userId || !activeOrgId) {
-    throw new Error("Unauthorized");
+    console.log("=== DELETE PROJECT DEBUG ===");
+    console.log("User ID:", userId);
+    console.log("Org ID (from client):", orgId);
+    console.log("Org Role:", orgRole);
+    console.log("Project ID:", projectId);
+    console.log("===========================");
+
+    if (!userId) {
+      throw new Error("Unauthorized: User not authenticated");
+    }
+
+    if (!orgId) {
+      throw new Error("Unauthorized: No organization context provided");
+    }
+
+    // Verify user is a member of the organization
+    const client = await clerkClient();
+    const membershipList = await client.organizations.getOrganizationMembershipList({
+      organizationId: orgId,
+    });
+
+    const userMembership = membershipList.data.find(
+      (member) => member.publicUserData.userId === userId
+    );
+
+    if (!userMembership) {
+      throw new Error("You are not a member of this organization");
+    }
+
+    if (userMembership.role !== "org:admin") {
+      throw new Error("Only organization admins can delete projects");
+    }
+
+    const project = await db.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new Error("Project not found");
+    }
+
+    if (project.organizationId !== orgId) {
+      throw new Error("You don't have permission to delete this project");
+    }
+
+    await db.project.delete({
+      where: { id: projectId },
+    });
+
+    console.log("✅ Project deleted successfully:", projectId);
+
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Delete project error:", error.message);
+    throw error;
   }
-
-  const membershipList = await clerkClient.organizations.getOrganizationMembershipList({
-    organizationId: activeOrgId,
-  });
-
-  const userMembership = membershipList.data.find(
-    (member) => member.publicUserData.userId === userId
-  );
-
-  if (!userMembership || (userMembership.role !== "admin" && userMembership.role !== "org:admin")) {
-    throw new Error("Only organization admins can delete projects");
-  }
-
-  const project = await db.project.findUnique({
-    where: { id: projectId },
-  });
-
-  if (!project || project.organizationId !== activeOrgId) {
-    throw new Error("Project not found or permission denied");
-  }
-
-  await db.project.delete({
-    where: { id: projectId },
-  });
-
-  return { success: true };
 }
 
 // ✅ Check if project key is available
 export async function checkProjectKeyAvailability(key, orgId) {
-  const { userId } = auth();
-  
+  const { userId } = await auth();
+
   if (!userId) {
     throw new Error("Unauthorized");
   }
@@ -121,8 +152,8 @@ export async function checkProjectKeyAvailability(key, orgId) {
 
 // ✅ Get project by ID
 export async function getProject(projectId) {
-  const { userId, orgId } = auth();
-  
+  const { userId, orgId } = await auth();
+
   if (!userId) {
     throw new Error("Unauthorized");
   }
@@ -148,7 +179,7 @@ export async function getProject(projectId) {
       return null;
     }
 
-    return project;
+    return ultraSerialize(project);
   } catch (error) {
     console.error("Error fetching project:", error);
     return null;

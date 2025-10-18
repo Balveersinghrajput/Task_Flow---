@@ -111,7 +111,9 @@ export default function Home() {
           <h3 className="text-3xl font-bold mb-12 text-center ">
             Frequently Asked Questions
           </h3>
-          <FAQAccordion />
+          <div suppressHydrationWarning>
+            <FAQAccordion />
+          </div>
         </div>
       </section>
 

@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { BarLoader } from "react-spinners";
+import { toast } from "sonner"; // ✅ Added toast import
 
 export default function CreateProjectPage() {
   const router = useRouter();
@@ -39,6 +40,26 @@ export default function CreateProjectPage() {
       );
     }
   }, [isOrgLoaded, isUserLoaded, membership]);
+
+  // ✅ Toast notification for errors
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message || "Failed to create project", {
+        description: error.message.includes("already exists") 
+          ? "Try using a different project key (e.g., RCYT2, RCYT-NEW, etc.)"
+          : undefined,
+      });
+    }
+  }, [error]);
+
+  // ✅ Toast notification for success with redirect
+  useEffect(() => {
+    if (success) {
+      toast.success("Project created successfully!", {
+        description: "Redirecting to project page...",
+      });
+    }
+  }, [success]);
 
   // ✅ Debounced key validation function
   const validateKey = useCallback(async (key) => {
@@ -73,17 +94,18 @@ export default function CreateProjectPage() {
 
   const onSubmit = async (data) => {
     if (!isAdmin) {
-      alert("Only organization admins can create projects");
+      toast.error("Only organization admins can create projects");
       return;
     }
 
     if (!membership?.organization?.id) {
-      alert("No Organization Selected");
+      toast.error("No Organization Selected");
       return;
     }
 
     setLoading(true);
     setError(null);
+    setSuccess(false);
 
     try {
       console.log("Creating project with data:", data);
@@ -212,27 +234,6 @@ export default function CreateProjectPage() {
         >
           {loading ? "Creating..." : "Create Project"}
         </Button>
-
-        {error && (
-          <div className="text-red-500 mt-2 p-4 bg-red-50 rounded-lg border border-red-200">
-            <p className="font-semibold">Error creating project:</p>
-            <p className="text-sm">{error.message}</p>
-            {error.message.includes("already exists") && (
-              <p className="text-xs mt-1 text-red-600">
-                💡 Try using a different project key (e.g., RCYT2, RCYT-NEW, etc.)
-              </p>
-            )}
-          </div>
-        )}
-        {success && !loading && (
-          <div className="text-green-500 text-center mt-2 p-4 bg-green-50 rounded-lg">
-            <p className="font-semibold">Project created successfully!</p>
-            <p className="text-sm">Redirecting to project page...</p>
-            <div className="mt-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500 mx-auto"></div>
-            </div>
-          </div>
-        )}
       </form>
     </div>
   );

@@ -10,7 +10,7 @@ const Onboarding = () => {
 
   useEffect(() => {
 if(organization){
-  router.push(`/organization/${organization.slug}`);
+  router.push(`/organization/${organization.id}`);
 }
   }, [organization]);
 
@@ -19,8 +19,8 @@ if(organization){
       <div className="flex justify-center items-center pt-14">
         <OrganizationList
           hidePersonal
-          afterCreateOrganizationUrl="/organization/:slug"
-          afterSelectOrganizationUrl="/organization/:slug"
+          afterCreateOrganizationUrl={(org) => `/organization/${org.id}`}
+          afterSelectOrganizationUrl={(org) => `/organization/${org.id}`}
         />
       </div>
   )

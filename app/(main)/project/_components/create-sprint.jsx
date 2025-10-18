@@ -1,26 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Card, CardContent } from "@/components/ui/card";
 
-import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { addDays, format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { DayPicker } from "react-day-picker";
-import { format, addDays } from "date-fns";
+import { Controller, useForm } from "react-hook-form";
 
+import { createSprint } from "@/actions/sprints";
 import { sprintSchema } from "@/app/lib/validators";
 import useFetch from "@/hooks/use-fetch";
-import { createSprint } from "@/actions/sprints";
 
 export default function SprintCreationForm({
   projectTitle,
@@ -30,10 +30,20 @@ export default function SprintCreationForm({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [dateRange, setDateRange] = useState({
-    from: new Date(),
-    to: addDays(new Date(), 14),
+    from: null,
+    to: null,
   });
   const router = useRouter();
+
+  // Initialize dates on client side to avoid hydration issues
+  useEffect(() => {
+    if (!dateRange.from) {
+      setDateRange({
+        from: new Date(),
+        to: addDays(new Date(), 14),
+      });
+    }
+  }, []);
 
   const { loading: createSprintLoading, fn: createSprintFn } =
     useFetch(createSprint);
@@ -47,16 +57,16 @@ export default function SprintCreationForm({
     resolver: zodResolver(sprintSchema),
     defaultValues: {
       name: `${projectKey}-${sprintKey}`,
-      startDate: dateRange.from,
-      endDate: dateRange.to,
+      startDate: dateRange.from || new Date(),
+      endDate: dateRange.to || addDays(new Date(), 14),
     },
   });
 
   const onSubmit = async (data) => {
     await createSprintFn(projectId, {
       ...data,
-      startDate: dateRange.from,
-      endDate: dateRange.to,
+      startDate: dateRange.from || new Date(),
+      endDate: dateRange.to || addDays(new Date(), 14),
     });
     setShowForm(false);
     router.refresh(); // Refresh the page to show updated data

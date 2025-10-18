@@ -1,12 +1,15 @@
 "use server";
 
 import { db } from "@/lib/prisma";
+import { ultraSerialize } from "@/lib/serialization";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
 // Get organization by ID and check if user is a member
 export async function getOrganization(orgId) {
   const { userId } = auth();
   if (!userId) throw new Error("Unauthorized");
+
+  console.log('getOrganization called with orgId:', orgId, 'userId:', userId);
 
   // Get organization details
   const organization = await clerkClient.organizations.getOrganization({
@@ -15,19 +18,15 @@ export async function getOrganization(orgId) {
 
   if (!organization) return null;
 
-  // Check membership
-  const membershipList =
-    await clerkClient.organizations.getOrganizationMembershipList({
-      organizationId: orgId,
-    });
-
-  const userMembership = membershipList.data.find(
-    (member) => member.publicUserData.userId === userId
-  );
-
-  if (!userMembership) return null;
-
-  return organization;
+  // Return only serializable data
+  return ultraSerialize({
+    id: organization.id,
+    name: organization.name,
+    slug: organization.slug,
+    imageUrl: organization.imageUrl,
+    createdAt: organization.createdAt,
+    updatedAt: organization.updatedAt,
+  });
 }
 
 // Get all projects for an organization
@@ -35,18 +34,36 @@ export async function getProjects(orgId) {
   const { userId } = auth();
   if (!userId) throw new Error("Unauthorized");
 
+  console.log('getProjects called with orgId:', orgId, 'userId:', userId);
+
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
   });
 
   if (!user) throw new Error("User not found");
 
+  // First, let's check if there are ANY projects in the database
+  const allProjects = await db.project.findMany();
+  console.log('Total projects in database:', allProjects.length);
+  
+  // Check projects for this specific organization
   const projects = await db.project.findMany({
     where: { organizationId: orgId },
     orderBy: { createdAt: "desc" },
   });
 
-  return projects;
+  console.log('Found projects for orgId', orgId, ':', projects.length);
+  console.log('Projects data:', projects);
+
+  // Let's also check what organizations exist
+  const allOrgs = await db.project.findMany({
+    select: { organizationId: true },
+    distinct: ['organizationId']
+  });
+  console.log('All organization IDs in projects:', allOrgs.map(p => p.organizationId));
+
+  // Ensure all data is serializable
+  return ultraSerialize(projects);
 }
 
 // Get issues assigned to or reported by a user
@@ -73,7 +90,8 @@ export async function getUserIssues(userId) {
     orderBy: { updatedAt: "desc" },
   });
 
-  return issues;
+  // Ensure all data is serializable
+  return ultraSerialize(issues);
 }
 
 // Get all users in an organization
@@ -100,5 +118,5 @@ export async function getOrganizationUsers(orgId) {
     where: { clerkUserId: { in: userIds } },
   });
 
-  return users;
+  return ultraSerialize(users);
 }

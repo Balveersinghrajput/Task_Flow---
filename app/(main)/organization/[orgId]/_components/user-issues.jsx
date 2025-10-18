@@ -1,7 +1,6 @@
 import { getUserIssues } from "@/actions/organization";
 import IssueCard from "@/components/issue-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Suspense } from "react";
 
 export default async function UserIssues({ userId }) {
   const issues = await getUserIssues(userId);
@@ -27,14 +26,10 @@ export default async function UserIssues({ userId }) {
           <TabsTrigger value="reported">Reported by You</TabsTrigger>
         </TabsList>
         <TabsContent value="assigned">
-          <Suspense fallback={<div>Loading...</div>}>
-            <IssueGrid issues={assignedIssues} />
-          </Suspense>
+          <IssueGrid issues={assignedIssues} />
         </TabsContent>
         <TabsContent value="reported">
-          <Suspense fallback={<div>Loading...</div>}>
-            <IssueGrid issues={reportedIssues} />
-          </Suspense>
+          <IssueGrid issues={reportedIssues} />
         </TabsContent>
       </Tabs>
     </>

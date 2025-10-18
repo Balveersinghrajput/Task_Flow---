@@ -1,17 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import MDEditor from "@uiw/react-md-editor";
-import UserAvatar from "./user-avatar";
-import useFetch from "@/hooks/use-fetch";
-import { useOrganization, useUser } from "@clerk/nextjs";
 import {
   Select,
   SelectContent,
@@ -19,12 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BarLoader } from "react-spinners";
+import useFetch from "@/hooks/use-fetch";
+import { useOrganization, useUser } from "@clerk/nextjs";
+import MDEditor from "@uiw/react-md-editor";
 import { ExternalLink } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { BarLoader } from "react-spinners";
+import UserAvatar from "./user-avatar";
 
-import statuses from "@/data/status";
 import { deleteIssue, updateIssue } from "@/actions/issues";
+import statuses from "@/data/status";
 
 const priorityOptions = ["LOW", "MEDIUM", "HIGH", "URGENT"];
 
@@ -36,8 +36,8 @@ export default function IssueDetailsDialog({
   onUpdate = () => {},
   borderCol = "",
 }) {
-  const [status, setStatus] = useState(issue.status);
-  const [priority, setPriority] = useState(issue.priority);
+  const [status, setStatus] = useState(issue?.status || 'TODO');
+  const [priority, setPriority] = useState(issue?.priority || 'MEDIUM');
   const { user } = useUser();
   const { membership } = useOrganization();
   const router = useRouter();
@@ -58,19 +58,23 @@ export default function IssueDetailsDialog({
   } = useFetch(updateIssue);
 
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this issue?")) {
+    if (window.confirm("Are you sure you want to delete this issue?") && issue?.id) {
       deleteIssueFn(issue.id);
     }
   };
 
   const handleStatusChange = async (newStatus) => {
     setStatus(newStatus);
-    updateIssueFn(issue.id, { status: newStatus, priority });
+    if (issue?.id) {
+      updateIssueFn(issue.id, { status: newStatus, priority });
+    }
   };
 
   const handlePriorityChange = async (newPriority) => {
     setPriority(newPriority);
-    updateIssueFn(issue.id, { status, priority: newPriority });
+    if (issue?.id) {
+      updateIssueFn(issue.id, { status, priority: newPriority });
+    }
   };
 
   useEffect(() => {
@@ -84,10 +88,13 @@ export default function IssueDetailsDialog({
   }, [deleted, updated, deleteLoading, updateLoading]);
 
   const canChange =
-    user.id === issue.reporter.clerkUserId || membership.role === "org:admin";
+    user?.id === issue?.reporter?.clerkUserId || membership?.role === "org:admin";
 
   const handleGoToProject = () => {
-    router.push(`/project/${issue.projectId}?sprint=${issue.sprintId}`);
+    if (issue?.projectId) {
+      const sprintParam = issue.sprintId ? `?sprint=${issue.sprintId}` : '';
+      router.push(`/project/${issue.projectId}${sprintParam}`);
+    }
   };
 
   const isProjectPage = !pathname.startsWith("/project/");

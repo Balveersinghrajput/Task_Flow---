@@ -1,9 +1,7 @@
 import { getOrganization } from "@/actions/organization";
-import OrgSwitcher from "@/components/org-switcher";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import ProjectList from "./_components/project-list";
-import UserIssues from "./_components/user-issues";
 
 export default async function OrganizationPage({ params }) {
   const { orgId } = params || {};
@@ -19,12 +17,15 @@ export default async function OrganizationPage({ params }) {
     );
   }
 
+  console.log('OrganizationPage - orgId from params:', orgId);
+  
   const organization = await getOrganization(orgId);
+  console.log('OrganizationPage - organization:', organization);
 
   if (!organization) {
     return (
       <div className="text-center text-xl mt-10">
-        Organization not found
+        Organization not found for ID: {orgId}
       </div>
     );
   }
@@ -35,13 +36,9 @@ export default async function OrganizationPage({ params }) {
         <h1 className="text-5xl font-bold gradient-title pb-2">
           {organization.name}&rsquo;s Projects
         </h1>
-        <OrgSwitcher />
       </div>
       <div className="mb-4">
         <ProjectList orgId={organization.id} />
-      </div>
-      <div className="mt-8">
-        <UserIssues userId={userId} />
       </div>
     </div>
   );

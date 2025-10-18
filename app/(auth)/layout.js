@@ -1,9 +1,9 @@
-const layout = ({ children }) => {
+const AuthLayout = ({ children }) => {
   return (
-    <div className='flex justify-center pt-20 pb-5'>{children}
+    <div className="flex items-center justify-center min-h-screen">
+      {children}
     </div>
-  )
-}
+  );
+};
 
-export default layout;
-// { children }{children}
+export default AuthLayout;
