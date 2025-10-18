@@ -15,29 +15,45 @@ const allowedWithoutOrg = [
   "/",              // home
   "/onboarding",    // onboarding
   "/project/create",
-  "/project/[projectId]/page.jsx" // example extra path
+  "/project/[projectId]"
+  // Allow access to specific project pages (they contain org info)
+  // This will be handled by checking if the path matches /project/[projectId]
   // Add more paths here as needed
 ];
 
 export default clerkMiddleware((auth, req) => {
   const pathname = req.nextUrl.pathname;
+  const authData = auth();
 
-  // 1️⃣ Redirect to sign-in if user not signed in and trying to access a protected route
-  if (!auth().userId && isProtectedRoute(req)) {
-    return auth().redirectToSignIn();
+  // Minimal logging for performance
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Middleware: ${pathname} - userId: ${authData.userId}, orgId: ${authData.orgId}`);
   }
 
-  // 2️⃣ Redirect signed-in users without an orgId to onboarding,
-  // unless the path is in allowedWithoutOrg
+  // 1️⃣ Redirect to sign-in if user not signed in and trying to access a protected route
+  if (!authData.userId && isProtectedRoute(req)) {
+    console.log("Redirecting to sign-in");
+    return authData.redirectToSignIn();
+  }
+
+  // 2️⃣ Check if this is a project page (e.g., /project/abc123)
+  const isProjectPage = /^\/project\/[^\/]+$/.test(pathname);
+  console.log(`Is project page: ${isProjectPage}`);
+
+  // 3️⃣ Redirect signed-in users without an orgId to onboarding,
+  // unless the path is in allowedWithoutOrg OR it's a project page
   if (
-    auth().userId &&
-    !auth().orgId &&
-    !allowedWithoutOrg.includes(pathname)
+    authData.userId &&
+    !authData.orgId &&
+    !allowedWithoutOrg.includes(pathname) &&
+    !isProjectPage
   ) {
+    console.log("Redirecting to onboarding - no orgId");
     return NextResponse.redirect(new URL("/onboarding", req.url));
   }
 
-  // 3️⃣ Otherwise allow access
+  // 4️⃣ Otherwise allow access
+  console.log("Allowing access");
   return NextResponse.next();
 });
 
