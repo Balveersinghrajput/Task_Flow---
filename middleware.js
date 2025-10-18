@@ -15,44 +15,57 @@ const allowedWithoutOrg = [
   "/",              // home
   "/onboarding",    // onboarding
   "/project/create",
-  "/project/[projectId]"
-  // Allow access to specific project pages (they contain org info)
-  // This will be handled by checking if the path matches /project/[projectId]
-  // Add more paths here as needed
+  "/project/[projectId]",
+  "/organization/[orgId]"  // Allow access to organization pages
 ];
 
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
   const pathname = req.nextUrl.pathname;
-  const authData = auth();
+  const { userId, orgId, orgRole, redirectToSignIn } = await auth();
 
   // Minimal logging for performance
   if (process.env.NODE_ENV === 'development') {
-    console.log(`Middleware: ${pathname} - userId: ${authData.userId}, orgId: ${authData.orgId}`);
+    console.log(`Middleware: ${pathname} - userId: ${userId}, orgId: ${orgId}, orgRole: ${orgRole}`);
   }
 
   // 1️⃣ Redirect to sign-in if user not signed in and trying to access a protected route
-  if (!authData.userId && isProtectedRoute(req)) {
+  if (!userId && isProtectedRoute(req)) {
     console.log("Redirecting to sign-in");
-    return authData.redirectToSignIn();
+    return redirectToSignIn();
   }
 
   // 2️⃣ Check if this is a project page (e.g., /project/abc123)
   const isProjectPage = /^\/project\/[^\/]+$/.test(pathname);
   console.log(`Is project page: ${isProjectPage}`);
+ 
+  // 2️⃣ Check if this is an organization page (e.g., /organization/abc123)
+  const isOrganizationPage = /^\/organization\/[^\/]+$/.test(pathname);
+  console.log(`Is organization page: ${isOrganizationPage}`);
 
   // 3️⃣ Redirect signed-in users without an orgId to onboarding,
-  // unless the path is in allowedWithoutOrg OR it's a project page
+  // unless the path is in allowedWithoutOrg OR it's a project page OR organization page
   if (
-    authData.userId &&
-    !authData.orgId &&
+    userId &&
+    !orgId &&
     !allowedWithoutOrg.includes(pathname) &&
-    !isProjectPage
+    !isProjectPage &&
+    !isOrganizationPage
   ) {
     console.log("Redirecting to onboarding - no orgId");
     return NextResponse.redirect(new URL("/onboarding", req.url));
   }
 
-  // 4️⃣ Otherwise allow access
+  // 4️⃣ If user has orgId and is on onboarding page, redirect to organization
+  if (
+    userId &&
+    orgId &&
+    pathname === "/onboarding"
+  ) {
+    console.log("Redirecting to organization - user has orgId");
+    return NextResponse.redirect(new URL(`/organization/${orgId}`, req.url));
+  }
+
+  // 5️⃣ Otherwise allow access
   console.log("Allowing access");
   return NextResponse.next();
 });
