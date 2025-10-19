@@ -6,19 +6,17 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 
 // Get organization by ID and check if user is a member
 export async function getOrganization(orgId) {
-  const { userId } = auth();
+  const { userId } = await auth(); // ✅ Added await
   if (!userId) throw new Error("Unauthorized");
 
   console.log('getOrganization called with orgId:', orgId, 'userId:', userId);
 
-  // Get organization details
   const organization = await clerkClient.organizations.getOrganization({
     organizationId: orgId,
   });
 
   if (!organization) return null;
 
-  // Return only serializable data
   return ultraSerialize({
     id: organization.id,
     name: organization.name,
@@ -31,7 +29,7 @@ export async function getOrganization(orgId) {
 
 // Get all projects for an organization
 export async function getProjects(orgId) {
-  const { userId } = auth();
+  const { userId } = await auth(); // ✅ Added await
   if (!userId) throw new Error("Unauthorized");
 
   console.log('getProjects called with orgId:', orgId, 'userId:', userId);
@@ -42,11 +40,9 @@ export async function getProjects(orgId) {
 
   if (!user) throw new Error("User not found");
 
-  // First, let's check if there are ANY projects in the database
   const allProjects = await db.project.findMany();
   console.log('Total projects in database:', allProjects.length);
   
-  // Check projects for this specific organization
   const projects = await db.project.findMany({
     where: { organizationId: orgId },
     orderBy: { createdAt: "desc" },
@@ -55,20 +51,18 @@ export async function getProjects(orgId) {
   console.log('Found projects for orgId', orgId, ':', projects.length);
   console.log('Projects data:', projects);
 
-  // Let's also check what organizations exist
   const allOrgs = await db.project.findMany({
     select: { organizationId: true },
     distinct: ['organizationId']
   });
   console.log('All organization IDs in projects:', allOrgs.map(p => p.organizationId));
 
-  // Ensure all data is serializable
   return ultraSerialize(projects);
 }
 
 // Get issues assigned to or reported by a user
 export async function getUserIssues(userId) {
-  const { orgId } = auth();
+  const { orgId } = await auth(); // ✅ Added await
   if (!userId || !orgId) throw new Error("No user id or organization id found");
 
   const user = await db.user.findUnique({
@@ -90,13 +84,12 @@ export async function getUserIssues(userId) {
     orderBy: { updatedAt: "desc" },
   });
 
-  // Ensure all data is serializable
   return ultraSerialize(issues);
 }
 
 // Get all users in an organization
 export async function getOrganizationUsers(orgId) {
-  const { userId } = auth();
+  const { userId } = await auth(); // ✅ Added await
   if (!userId) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({

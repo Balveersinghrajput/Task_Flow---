@@ -64,9 +64,16 @@ export default function IssueCreationDrawer({
 
   useEffect(() => {
     if (isOpen && orgId) {
+      console.log('Fetching users for orgId:', orgId);
       fetchUsers(orgId);
     }
   }, [isOpen, orgId]);
+
+  // Debug: Log users when they change
+  useEffect(() => {
+    console.log('Users loaded:', users);
+    console.log('Users count:', users?.length);
+  }, [users]);
 
   const onSubmit = async (data) => {
     await createIssueFn(projectId, {
@@ -110,7 +117,7 @@ export default function IssueCreationDrawer({
               htmlFor="assigneeId"
               className="block text-sm font-medium mb-1"
             >
-              Assignee
+              Assignee {users?.length > 0 && `(${users.length} available)`}
             </label>
             <Controller
               name="assigneeId"
@@ -124,11 +131,17 @@ export default function IssueCreationDrawer({
                     <SelectValue placeholder="Select assignee" />
                   </SelectTrigger>
                   <SelectContent>
-                    {users?.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user?.name}
+                    {!users || users.length === 0 ? (
+                      <SelectItem value="no-users" disabled>
+                        No users available
                       </SelectItem>
-                    ))}
+                    ) : (
+                      users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name || user.email || 'Unknown User'}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               )}

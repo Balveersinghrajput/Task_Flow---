@@ -4,7 +4,7 @@ import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
 export async function getIssuesForSprint(sprintId) {
-  const { userId, orgId } = auth();
+  const { userId, orgId } = await auth(); // ✅ Added await
 
   if (!userId) {
     throw new Error("Unauthorized");
