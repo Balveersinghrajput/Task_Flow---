@@ -18,7 +18,7 @@ export const Header = async() => {
         <Link href="/">
           <h1 className="text-2xl font-bold">
           <Image
-            src={"/companies/atlassian.svg"}
+            src={"/companies/Task-logo.png"}
             alt="TaskFlow logo"
             width={200}
             height={50}

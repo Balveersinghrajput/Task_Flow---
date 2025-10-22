@@ -47,7 +47,7 @@ export default function Home() {
       <span className="flex mx-auto gap-3 sm:gap-4 items-center justify-center mt-3">
         with
         <Image
-          src="/companies/meta.svg"
+          src="/companies/Task-logo.png"
           alt="Task Logo"
           width={400}
           height={80}
