@@ -28,51 +28,53 @@ export default function CustomSignUpPage() {
     setError("");
 
     try {
-      // Create sign up with only email and password
+      // Create sign up
       const result = await signUp.create({
         emailAddress: email,
         password: password,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
       });
 
-      // Update user profile with names after account creation
-      if (firstName || lastName) {
-        await signUp.update({
-          firstName: firstName || undefined,
-          lastName: lastName || undefined,
-        });
-      }
+      console.log("Sign up result:", result.status);
 
-      // Handle different signup statuses
+      // Check if sign up is complete
       if (result.status === "complete") {
-        // No verification needed, sign in directly
         await setActive({ session: result.createdSessionId });
         router.push("/onboarding");
-      } else if (result.status === "missing_requirements") {
-        // Check what verification is needed
-        const emailVerification = result.unverifiedFields.includes("email_address");
-        
-        if (emailVerification) {
-          await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-          setVerifying(true);
-        }
-      } else {
-        // Try to prepare email verification
-        try {
-          await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-          setVerifying(true);
-        } catch (verifyErr) {
-          // If verification not available, try to complete signup
-          if (signUp.status === "complete") {
-            await setActive({ session: signUp.createdSessionId });
-            router.push("/onboarding");
-          } else {
-            throw verifyErr;
+        return;
+      }
+
+      // Check if email verification is needed
+      if (result.status === "missing_requirements") {
+        // Check if email needs verification
+        if (result.unverifiedFields?.includes("email_address")) {
+          // Try to prepare email verification
+          try {
+            await signUp.prepareEmailAddressVerification({ 
+              strategy: "email_code" 
+            });
+            setVerifying(true);
+          } catch (verifyError) {
+            console.error("Email verification error:", verifyError);
+            // If verification fails, check if we can complete without it
+            if (result.status === "complete") {
+              await setActive({ session: result.createdSessionId });
+              router.push("/onboarding");
+            } else {
+              throw new Error("Email verification is required but not available. Please contact support.");
+            }
           }
+        } else {
+          // No email verification needed, try to complete
+          await setActive({ session: result.createdSessionId });
+          router.push("/onboarding");
         }
       }
     } catch (err) {
       console.error("Sign-up error:", err);
-      setError(err.errors?.[0]?.message || "Failed to sign up. Please try again.");
+      const errorMessage = err.errors?.[0]?.message || err.message || "Failed to sign up. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -89,6 +91,8 @@ export default function CustomSignUpPage() {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.push("/onboarding");
+      } else {
+        setError("Verification incomplete. Please try again.");
       }
     } catch (err) {
       console.error("Verification error:", err);
@@ -198,9 +202,6 @@ export default function CustomSignUpPage() {
             {!verifying ? (
               <>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* CAPTCHA Container - IMPORTANT: This div is required by Clerk */}
-                  <div id="clerk-captcha" className="hidden"></div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-xs sm:text-sm font-semibold text-slate-300 mb-2">
