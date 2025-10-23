@@ -2,14 +2,19 @@
 
 import { db } from "@/lib/prisma";
 import { ultraSerialize } from "@/lib/serialization";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { clerkClient, currentUser } from "@clerk/nextjs/server";
 
 // ✅ Create a new project
 export async function createProject(data) {
-  const { userId, orgId: activeOrgId } = await auth();
-  const orgId = data.orgId || activeOrgId;
+  const user = await currentUser();
+  
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
 
-  if (!userId) throw new Error("Unauthorized");
+  const userId = user.id;
+  const activeOrgId = user.publicMetadata?.organizationId || user.organizationMemberships?.[0]?.organization?.id;
+  const orgId = data.orgId || activeOrgId;
 
   if (!orgId) {
     throw new Error("No Organization Selected. Please select an organization first.");
@@ -67,18 +72,19 @@ export async function createProject(data) {
 // ✅ Delete project - NOW ACCEPTS orgId as parameter
 export async function deleteProject(projectId, orgId) {
   try {
-    const { userId, orgRole } = await auth();
+    const user = await currentUser();
+
+    if (!user) {
+      throw new Error("Unauthorized: User not authenticated");
+    }
+
+    const userId = user.id;
 
     console.log("=== DELETE PROJECT DEBUG ===");
     console.log("User ID:", userId);
     console.log("Org ID (from client):", orgId);
-    console.log("Org Role:", orgRole);
     console.log("Project ID:", projectId);
     console.log("===========================");
-
-    if (!userId) {
-      throw new Error("Unauthorized: User not authenticated");
-    }
 
     if (!orgId) {
       throw new Error("Unauthorized: No organization context provided");
@@ -129,9 +135,9 @@ export async function deleteProject(projectId, orgId) {
 
 // ✅ Check if project key is available
 export async function checkProjectKeyAvailability(key, orgId) {
-  const { userId } = await auth();
+  const user = await currentUser();
 
-  if (!userId) {
+  if (!user) {
     throw new Error("Unauthorized");
   }
 
@@ -152,11 +158,14 @@ export async function checkProjectKeyAvailability(key, orgId) {
 
 // ✅ Get project by ID
 export async function getProject(projectId) {
-  const { userId, orgId } = await auth();
+  const user = await currentUser();
 
-  if (!userId) {
+  if (!user) {
     throw new Error("Unauthorized");
   }
+
+  const userId = user.id;
+  const orgId = user.publicMetadata?.organizationId || user.organizationMemberships?.[0]?.organization?.id;
 
   try {
     const project = await db.project.findUnique({

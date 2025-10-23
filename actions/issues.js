@@ -4,7 +4,7 @@ import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
 export async function getIssuesForSprint(sprintId) {
-  const { userId, orgId } = await auth(); // ✅ Added await
+  const { userId, orgId } = await auth(); // ✅ Already correct
 
   if (!userId) {
     throw new Error("Unauthorized");
@@ -31,6 +31,7 @@ export async function getIssuesForSprint(sprintId) {
     include: {
       assignee: true,
       reporter: true,
+      sprint: true,
     },
   });
 
@@ -38,7 +39,7 @@ export async function getIssuesForSprint(sprintId) {
 }
 
 export async function createIssue(projectId, data) {
-  const { userId, orgId } = auth();
+  const { userId, orgId } = await auth(); // ✅ Add await
 
   if (!userId) {
     throw new Error("Unauthorized");
@@ -76,7 +77,7 @@ export async function createIssue(projectId, data) {
       projectId: projectId,
       sprintId: data.sprintId,
       reporterId: user.id,
-      assigneeId: data.assigneeId || null, // Add this line
+      assigneeId: data.assigneeId || null,
       order: newOrder,
     },
     include: {
@@ -89,7 +90,7 @@ export async function createIssue(projectId, data) {
 }
 
 export async function updateIssueOrder(updatedIssues) {
-  const { userId, orgId } = auth();
+  const { userId, orgId } = await auth(); // ✅ Add await
 
   if (!userId) {
     throw new Error("Unauthorized");
@@ -134,7 +135,7 @@ export async function updateIssueOrder(updatedIssues) {
 }
 
 export async function deleteIssue(issueId) {
-  const { userId, orgId } = auth();
+  const { userId, orgId } = await auth(); // ✅ Add await
 
   if (!userId) {
     throw new Error("Unauthorized");
@@ -180,7 +181,7 @@ export async function deleteIssue(issueId) {
 }
 
 export async function updateIssue(issueId, data) {
-  const { userId, orgId } = auth();
+  const { userId, orgId } = await auth(); // ✅ Add await
 
   if (!userId) {
     throw new Error("Unauthorized");
