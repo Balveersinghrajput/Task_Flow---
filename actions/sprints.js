@@ -43,7 +43,8 @@ export async function createSprint(projectId, data) {
 }
 
 export async function updateSprintStatus(sprintId, newStatus) {
-  const { userId, orgId, orgRole } = auth();
+  // ✅ FIXED: Added await here
+  const { userId, orgId, orgRole } = await auth();
 
   if (!userId) {
     throw new Error("Unauthorized");
@@ -71,8 +72,9 @@ export async function updateSprintStatus(sprintId, newStatus) {
     // If no active orgId, we need to check user's role in the project's organization
     let userRole = orgRole;
     if (!orgId) {
-      // Get user's membership in the project's organization
-      const membershipList = await clerkClient.organizations.getOrganizationMembershipList({
+      // ✅ FIXED: Added await here too
+      const client = await clerkClient();
+      const membershipList = await client.organizations.getOrganizationMembershipList({
         organizationId: projectOrgId,
       });
 
@@ -111,6 +113,7 @@ export async function updateSprintStatus(sprintId, newStatus) {
 
     return { success: true, sprint: updatedSprint };
   } catch (error) {
-    throw new Error(error.message);
+    console.error("Error in updateSprintStatus:", error);
+    return { success: false, error: error.message };
   }
 }

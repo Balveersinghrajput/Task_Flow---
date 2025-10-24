@@ -21,6 +21,7 @@ const isProtectedRoute = createRouteMatcher([
 // Paths allowed without an organization
 const allowedWithoutOrg = [
   "/onboarding",
+  "/main/onboarding",
   "/project/create",
 ];
 

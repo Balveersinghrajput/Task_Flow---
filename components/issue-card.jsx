@@ -133,34 +133,67 @@ export default function IssueCard({
   return (
     <>
       <Card
-        className="cursor-pointer hover:shadow-md transition-shadow"
+        className="cursor-pointer hover:shadow-md transition-shadow w-full"
         onClick={() => setIsDialogOpen(true)}
       >
         <CardHeader
-          className={`border-t-2 ${priorityColor[safeIssue.priority]} rounded-lg`}
+          className={`border-t-2 ${priorityColor[safeIssue.priority]} rounded-lg px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-4`}
         >
           <div className="flex items-start justify-between gap-2 mt-1">
-            <CardTitle className="flex-1">{safeIssue.title}</CardTitle>
-            <div className={`flex items-center gap-1 text-[10px] sm:text-xs font-mono whitespace-nowrap ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
-              {isOverdue && <span className="mr-1">⚠</span>}
-              {timeRemaining.days > 0 && <span>{timeRemaining.days}d:</span>}
-              <span>{String(timeRemaining.hours).padStart(2, '0')}h:</span>
-              <span>{String(timeRemaining.minutes).padStart(2, '0')}m:</span>
-              <span>{String(timeRemaining.seconds).padStart(2, '0')}s</span>
+            {/* Title - responsive text sizing */}
+            <CardTitle className="flex-1 text-sm sm:text-base md:text-lg lg:text-xl line-clamp-2 break-words pr-2">
+              {safeIssue.title}
+            </CardTitle>
+            
+            {/* Timer - responsive display */}
+            <div className={`flex flex-col sm:flex-row items-end sm:items-center gap-0.5 sm:gap-1 text-[9px] xs:text-[10px] sm:text-xs font-mono whitespace-nowrap flex-shrink-0 ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
+              {/* Warning icon */}
+              {isOverdue && <span className="text-xs sm:text-sm">⚠</span>}
+              
+              {/* Timer display - stacked on mobile, inline on desktop */}
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-0 sm:gap-1">
+                {/* Days (only if > 0) */}
+                {timeRemaining.days > 0 && (
+                  <span className="hidden xs:inline">{timeRemaining.days}d</span>
+                )}
+                
+                {/* Time display - compact on mobile */}
+                <div className="flex items-center gap-0.5 sm:gap-1">
+                  <span>{String(timeRemaining.hours).padStart(2, '0')}h</span>
+                  <span className="hidden xs:inline">:</span>
+                  <span>{String(timeRemaining.minutes).padStart(2, '0')}m</span>
+                  <span className="hidden sm:inline">:</span>
+                  <span className="hidden sm:inline">{String(timeRemaining.seconds).padStart(2, '0')}s</span>
+                </div>
+              </div>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="flex gap-2 -mt-3">
-          {showStatus && <Badge>{safeIssue.status}</Badge>}
-          <Badge variant="outline" className="-ml-1">
+        {/* Badges - responsive spacing and sizing */}
+        <CardContent className="flex flex-wrap gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-3 md:px-6 -mt-2 sm:-mt-3">
+          {showStatus && (
+            <Badge className="text-[10px] xs:text-xs sm:text-sm px-1.5 py-0.5 sm:px-2 sm:py-1">
+              {safeIssue.status}
+            </Badge>
+          )}
+          <Badge 
+            variant="outline" 
+            className="text-[10px] xs:text-xs sm:text-sm px-1.5 py-0.5 sm:px-2 sm:py-1"
+          >
             {safeIssue.priority}
           </Badge>
         </CardContent>
-        <CardFooter className="flex flex-col items-start space-y-3">
+
+        {/* Footer - responsive spacing */}
+        <CardFooter className="flex flex-col items-start space-y-2 sm:space-y-3 px-3 py-3 sm:px-4 sm:py-4 md:px-6">
+          {/* User Avatar */}
           <UserAvatar user={safeIssue.assignee} />
 
-          <div className="text-xs text-gray-400 w-full">Created {created}</div>
+          {/* Created timestamp - responsive text */}
+          <div className="text-[10px] xs:text-xs sm:text-sm text-gray-400 w-full">
+            Created {created}
+          </div>
         </CardFooter>
       </Card>
 

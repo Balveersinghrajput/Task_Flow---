@@ -36,39 +36,45 @@ export default function CustomSignUpPage() {
         lastName: lastName || undefined,
       });
 
-      console.log("Sign up result:", result.status);
+      console.log("Sign up result:", result);
 
-      // Check if sign up is complete
+      // If sign up is complete, proceed
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
+        // Redirect to onboarding - middleware will handle org check
         router.push("/onboarding");
         return;
       }
 
-      // Check if email verification is needed
+      // If email verification is required
       if (result.status === "missing_requirements") {
-        // Check if email needs verification
-        if (result.unverifiedFields?.includes("email_address")) {
-          // Try to prepare email verification
+        const needsEmailVerification = result.unverifiedFields?.includes("email_address");
+        
+        if (needsEmailVerification) {
           try {
             await signUp.prepareEmailAddressVerification({ 
               strategy: "email_code" 
             });
             setVerifying(true);
           } catch (verifyError) {
-            console.error("Email verification error:", verifyError);
-            // If verification fails, check if we can complete without it
-            if (result.status === "complete") {
-              await setActive({ session: result.createdSessionId });
-              router.push("/onboarding");
+            console.error("Email verification preparation error:", verifyError);
+            
+            // Check if it's a strategy error
+            if (verifyError.errors?.[0]?.code === "form_param_value_invalid") {
+              setError("Email verification is configured differently. Please contact support or use Google sign-in.");
             } else {
-              throw new Error("Email verification is required but not available. Please contact support.");
+              setError(verifyError.errors?.[0]?.message || "Failed to prepare email verification.");
             }
           }
         } else {
-          // No email verification needed, try to complete
-          await setActive({ session: result.createdSessionId });
-          router.push("/onboarding");
+          // Try to complete without verification
+          try {
+            await setActive({ session: result.createdSessionId });
+            router.push("/onboarding");
+          } catch (activeError) {
+            console.error("Set active error:", activeError);
+            setError("Failed to complete sign up. Please try again.");
+          }
         }
       }
     } catch (err) {
@@ -121,6 +127,7 @@ export default function CustomSignUpPage() {
     
     try {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setError(""); // Clear any previous errors
     } catch (err) {
       console.error("Resend error:", err);
       setError("Failed to resend code. Please try again.");
@@ -212,7 +219,7 @@ export default function CustomSignUpPage() {
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder="John"
-                        className="w-full px-3 sm:px-4 py-3 sm:py-3.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 text-sm sm:text-base placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800/80 transition-all"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 text-sm sm:text-base placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800/80 transition-all"
                       />
                     </div>
                     <div>
@@ -224,7 +231,7 @@ export default function CustomSignUpPage() {
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder="Doe"
-                        className="w-full px-3 sm:px-4 py-3 sm:py-3.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 text-sm sm:text-base placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800/80 transition-all"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 text-sm sm:text-base placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800/80 transition-all"
                       />
                     </div>
                   </div>
@@ -242,7 +249,7 @@ export default function CustomSignUpPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="your@email.com"
-                        className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-3.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 text-sm sm:text-base placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800/80 transition-all"
+                        className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 text-sm sm:text-base placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800/80 transition-all"
                         required
                       />
                     </div>
@@ -261,8 +268,9 @@ export default function CustomSignUpPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-3.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 text-sm sm:text-base placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800/80 transition-all"
+                        className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-100 text-sm sm:text-base placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800/80 transition-all"
                         required
+                        minLength={8}
                       />
                       <button
                         type="button"
@@ -291,7 +299,7 @@ export default function CustomSignUpPage() {
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 transition-all duration-300 group-hover:scale-105"></div>
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                    <span className="relative flex items-center justify-center px-4 sm:px-6 py-3 sm:py-3.5 text-white font-semibold text-sm sm:text-base">
+                    <span className="relative flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 text-white font-semibold text-sm sm:text-base">
                       {loading ? (
                         <>
                           <svg className="animate-spin -ml-1 mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24">
@@ -324,7 +332,7 @@ export default function CustomSignUpPage() {
                 <button
                   type="button"
                   onClick={handleGoogleSignUp}
-                  className="w-full flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-3.5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 rounded-xl text-slate-200 font-semibold text-xs sm:text-sm md:text-base transition-all hover:scale-[1.01] active:scale-[0.99] group"
+                  className="w-full flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 rounded-xl text-slate-200 font-semibold text-xs sm:text-sm md:text-base transition-all hover:scale-[1.01] active:scale-[0.99] group"
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -371,7 +379,7 @@ export default function CustomSignUpPage() {
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 transition-all duration-300 group-hover:scale-105"></div>
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                    <span className="relative flex items-center justify-center px-4 sm:px-6 py-3 sm:py-3.5 text-white font-semibold text-sm sm:text-base">
+                    <span className="relative flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 text-white font-semibold text-sm sm:text-base">
                       {loading ? (
                         <>
                           <svg className="animate-spin -ml-1 mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24">
@@ -409,7 +417,11 @@ export default function CustomSignUpPage() {
 
                 <button
                   type="button"
-                  onClick={() => setVerifying(false)}
+                  onClick={() => {
+                    setVerifying(false);
+                    setCode("");
+                    setError("");
+                  }}
                   className="mt-5 sm:mt-6 w-full flex items-center justify-center gap-2 px-4 py-2 sm:py-3 text-xs sm:text-sm text-slate-400 hover:text-slate-300 transition-colors"
                 >
                   <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

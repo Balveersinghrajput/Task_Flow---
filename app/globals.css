@@ -325,3 +325,57 @@
     opacity: 0.3;
   }
 }
+
+/* app/layout.js */
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+/* - */
+/* Ensure all interactive elements are clickable */
+button, a, [role="button"] {
+  pointer-events: auto !important;
+}
+
+/* Make sure no overlays are blocking */
+.relative {
+  isolation: isolate;
+}
+
+
+/* ✅ CRITICAL: Fix drag and drop cursor alignment */
+[data-rbd-draggable-id] {
+  box-sizing: border-box;
+}
+
+/* Remove any transforms that might offset the card */
+[data-rbd-draggable-context-id] {
+  cursor: grab;
+}
+
+[data-rbd-draggable-context-id]:active {
+  cursor: grabbing;
+}
+
+/* Ensure dragging element follows cursor exactly */
+body[style*="cursor: grabbing"] [data-rbd-draggable-id][style*="transform"] {
+  pointer-events: none;
+}
+
+/* Fix for the offset issue - ensure proper positioning */
+[data-rbd-draggable-id][style*="position: fixed"] {
+  pointer-events: auto;
+}

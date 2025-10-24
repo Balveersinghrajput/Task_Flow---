@@ -8,422 +8,147 @@ import { Inter } from "next/font/google";
 import "react-day-picker/dist/style.css";
 import { Toaster } from "sonner";
 import "./globals.css";
+
 const inter = Inter({ subsets: ["latin"] });
+
 export const metadata = {
-title: "Task-Flow",
-description: "Project Management app",
+  title: "Task-Flow",
+  description: "Project Management app",
 };
+
 export default function RootLayout({ children }) {
-return (
-<ClerkProvider
-appearance={{
-baseTheme: dark,
-variables: {
-// Brand Colors
-colorPrimary: "#a855f7", // Purple-500
-colorSuccess: "#22c55e",
-colorDanger: "#ef4444",
-colorWarning: "#f59e0b",
-      // Backgrounds
-      colorBackground: "transparent", // Let stars show through
-      colorInputBackground: "rgba(30, 41, 59, 0.6)",
-      colorInputText: "#f8fafc",
-      
-      // Effects
-      borderRadius: "1rem",
-      colorShimmer: "rgba(168, 85, 247, 0.15)",
-      
-      // Spacing
-      spacingUnit: "1rem",
-    },
-    elements: {
-      // Main card - Ultra glassmorphism
-      card: `
-        bg-gradient-to-br from-slate-900/40 via-purple-900/20 to-slate-900/40
-        backdrop-blur-2xl 
-        border border-purple-500/20
-        shadow-[0_0_50px_rgba(168,85,247,0.15)]
-        before:absolute before:inset-0 
-        before:rounded-[1rem] 
-        before:p-[2px] 
-        before:bg-gradient-to-br before:from-purple-500/40 before:via-pink-500/40 before:to-blue-500/40
-        before:-z-10
-        before:blur-sm
-        relative
-        overflow-hidden
-        after:absolute after:inset-0
-        after:bg-gradient-to-tr after:from-transparent after:via-purple-500/5 after:to-transparent
-        after:opacity-0 hover:after:opacity-100
-        after:transition-opacity after:duration-500
-      `,
-      
-      // Root box for organization components
-      rootBox: `
-        bg-transparent
-      `,
-      
-      // Organization List specific
-      organizationList: `
-        bg-transparent
-      `,
-      
-      organizationListContainer: `
-        bg-transparent
-      `,
-      
-      // Organization Preview Card - Main card styling
-      organizationPreview: `
-        bg-slate-900/40
-        backdrop-blur-xl
-        border-0
-        shadow-none
-        transition-all duration-300
-        hover:bg-slate-900/60
-        rounded-2xl
-      `,
-      
-      organizationPreviewMainIdentifier: `
-        text-slate-100 font-semibold text-lg
-      `,
-      
-      organizationPreviewSecondaryIdentifier: `
-        text-slate-400 text-sm
-      `,
-      
-      organizationPreviewAvatarBox: `
-        border-0
-        shadow-none
-        bg-slate-800/40
-        backdrop-blur-lg
-      `,
-      
-      organizationPreviewAvatarImage: `
-        brightness-110
-      `,
-      
-      // Organization Switcher Card
-      organizationSwitcherPopoverCard: `
-        bg-slate-900/60
-        backdrop-blur-xl
-        border-0
-        shadow-none
-        rounded-2xl
-      `,
-      
-      organizationSwitcherPopoverActionButton: `
-        hover:bg-purple-500/10
-        text-slate-300
-        hover:text-purple-300
-        transition-all duration-200
-        rounded-xl
-      `,
-      
-      organizationSwitcherPopoverActionButtonText: `
-        text-slate-300
-      `,
-      
-      organizationSwitcherPopoverActionButtonIcon: `
-        text-purple-400
-      `,
-      
-      // Organization Switcher Trigger
-      organizationSwitcherTrigger: `
-        bg-slate-800/40
-        backdrop-blur-xl
-        border-0
-        hover:bg-slate-700/60
-        shadow-none
-        transition-all duration-300
-        rounded-xl
-      `,
-      
-      organizationSwitcherTriggerIcon: `
-        text-purple-400
-      `,
-      
-      // Organization Profile Card
-      organizationProfileCard: `
-        bg-slate-900/40
-        backdrop-blur-xl
-        border-0
-        shadow-none
-        rounded-2xl
-      `,
-      
-      // Member List
-      membersPageInviteButton: `
-        bg-gradient-to-r from-purple-600 to-blue-600
-        hover:from-purple-500 hover:to-blue-500
-        text-white
-        shadow-[0_0_20px_rgba(168,85,247,0.4)]
-        hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]
-        transition-all duration-300
-        hover:scale-[1.02]
-        border border-purple-400/30
-        rounded-xl
-      `,
-      
-      // Logo/Header area
-      logoBox: "mb-6",
-      logoImage: "brightness-110 contrast-110",
-      
-      // Header with animated gradient
-      headerTitle: `
-        text-transparent bg-clip-text 
-        bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400
-        font-bold text-3xl mb-1
-        animate-gradient
-        bg-[length:200%_auto]
-      `,
-      headerSubtitle: "text-slate-400 text-base font-light tracking-wide",
-      
-      // Primary button with glow effect
-      formButtonPrimary: `
-        relative
-        bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600
-        hover:from-purple-500 hover:via-purple-400 hover:to-blue-500
-        text-white font-semibold text-base
-        shadow-[0_0_20px_rgba(168,85,247,0.4)]
-        hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]
-        transition-all duration-300
-        hover:scale-[1.02]
-        before:absolute before:inset-0
-        before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent
-        before:translate-x-[-200%] hover:before:translate-x-[200%]
-        before:transition-transform before:duration-700
-        overflow-hidden
-        border border-purple-400/30
-        rounded-xl
-      `,
-      
-      formButtonReset: `
-        text-slate-400 hover:text-purple-400 
-        transition-all duration-200
-        hover:bg-purple-500/10 rounded-lg
-      `,
-      
-      // Input fields with neon effect
-      formFieldInput: `
-        bg-slate-900/50 
-        border border-slate-700/50
-        text-slate-100 
-        placeholder:text-slate-500
-        focus:border-purple-500/60
-        focus:ring-2 focus:ring-purple-500/30
-        focus:shadow-[0_0_15px_rgba(168,85,247,0.2)]
-        transition-all duration-300
-        hover:border-slate-600/50
-        rounded-xl
-      `,
-      
-      formFieldLabel: "text-slate-300 font-medium text-sm tracking-wide",
-      
-      formFieldInputShowPasswordButton: `
-        text-slate-400 hover:text-purple-400
-        transition-colors duration-200
-      `,
-      
-      // Footer links
-      footerAction: "text-slate-400 hover:text-purple-400 transition-colors duration-200",
-      footerActionLink: `
-        text-purple-400 hover:text-purple-300 
-        font-semibold 
-        underline decoration-purple-400/40 
-        hover:decoration-purple-400
-        underline-offset-4
-        transition-all duration-200
-      `,
-      
-      // Social buttons with hover effects
-      socialButtonsBlockButton: `
-        bg-slate-800/40
-        border border-slate-700/50
-        text-slate-200
-        hover:bg-slate-700/50
-        hover:border-purple-500/30
-        hover:shadow-[0_0_15px_rgba(168,85,247,0.15)]
-        transition-all duration-300
-        hover:scale-[1.02]
-        rounded-xl
-      `,
-      
-      socialButtonsBlockButtonText: "text-slate-300 font-medium",
-      
-      socialButtonsProviderIcon: "brightness-110",
-      
-      // Divider
-      dividerLine: "bg-gradient-to-r from-transparent via-slate-600/50 to-transparent",
-      dividerText: "text-slate-500 text-sm font-light px-4 bg-slate-900/50",
-      
-      // Avatar with glow
-      avatarBox: `
-        border-2 border-purple-500/40 
-        shadow-[0_0_20px_rgba(168,85,247,0.3)]
-        ring-2 ring-purple-500/20
-      `,
-      avatarImage: "brightness-105",
-      
-      // User button dropdown
-      userButtonBox: "border border-slate-700/50 shadow-lg",
-      userButtonPopoverCard: `
-        bg-slate-900/95 
-        backdrop-blur-2xl 
-        border border-purple-500/20
-        shadow-[0_0_40px_rgba(168,85,247,0.2)]
-        rounded-2xl
-      `,
-      userButtonPopoverActionButton: `
-        hover:bg-purple-500/10 
-        text-slate-300 
-        hover:text-purple-300
-        transition-all duration-200
-        hover:pl-4
-        rounded-xl
-      `,
-      userButtonPopoverActionButtonText: "text-slate-300",
-      userButtonPopoverActionButtonIcon: "text-purple-400",
-      
-      // Alerts
-      alert: `
-        bg-slate-800/60 
-        backdrop-blur-xl
-        border border-slate-700/50 
-        text-slate-200
-        shadow-lg
-        rounded-xl
-      `,
-      alertText: "text-slate-300",
-      
-      // Loading
-      spinner: "text-purple-500",
-      
-      // Badges
-      badge: `
-        bg-gradient-to-r from-purple-500/20 to-blue-500/20
-        text-purple-300 
-        border border-purple-500/30
-        shadow-sm
-        rounded-lg
-      `,
-      
-      // Error text
-      formFieldErrorText: "text-red-400 text-sm font-medium",
-      
-      // Identity preview
-      identityPreview: "hover:bg-slate-800/50 transition-colors duration-200 rounded-xl",
-      identityPreviewEditButton: `
-        text-purple-400 hover:text-purple-300
-        hover:bg-purple-500/10 rounded
-        transition-all duration-200
-      `,
-      
-      // Menu items
-      menuItem: `
-        hover:bg-purple-500/10 
-        text-slate-300 
-        hover:text-purple-300
-        transition-all duration-200
-        hover:pl-4
-        rounded-xl
-      `,
-      menuItemText: "text-slate-300",
-      
-      // Navbar
-      navbar: `
-        bg-slate-900/60 
-        backdrop-blur-xl 
-        border-b border-purple-500/20
-        shadow-[0_0_30px_rgba(168,85,247,0.1)]
-      `,
-      
-      navbarButton: `
-        hover:bg-purple-500/10
-        transition-all duration-200
-        hover:shadow-[0_0_15px_rgba(168,85,247,0.15)]
-        rounded-xl
-      `,
-      
-      // Profile sections
-      profileSection: "border-t border-slate-800/50",
-      profileSectionTitle: `
-        text-slate-400 text-xs 
-        font-bold uppercase tracking-widest
-        bg-gradient-to-r from-purple-400/20 to-transparent
-        px-2 py-1 rounded
-      `,
-      profileSectionContent: "text-slate-300",
-      
-      // Tabs
-      tabButton: `
-        text-slate-400 
-        hover:text-purple-400 
-        transition-all duration-200
-        data-[state=active]:text-purple-400 
-        data-[state=active]:border-purple-400
-        data-[state=active]:shadow-[0_2px_10px_rgba(168,85,247,0.2)]
-        hover:bg-blue-500/5
-        rounded-lg
-      `,
-      tabPanel: "text-slate-300",
-      
-      // Form fields
-      formFieldRow: "gap-4",
-      formFieldAction: "text-purple-400 hover:text-purple-300 transition-colors",
-      
-      // OTP Input
-      formFieldInputGroup: "gap-2",
-      
-      // File input
-      fileDropAreaBox: `
-        border-2 border-dashed border-slate-700/50
-        hover:border-purple-500/50
-        bg-slate-900/30
-        transition-all duration-300
-        hover:bg-purple-500/5
-        rounded-xl
-      `,
-      fileDropAreaIconBox: "text-purple-400",
-      fileDropAreaButtonPrimary: `
-        text-purple-400 hover:text-purple-300
-        underline decoration-purple-400/40
-        transition-all duration-200
-      `,
-      
-      // Page elements
-      pageScrollBox: "scrollbar-thin scrollbar-thumb-purple-500/20 scrollbar-track-transparent",
-      
-      // Modal/backdrop
-      modalBackdrop: "backdrop-blur-sm bg-slate-900/80",
-      modalContent: `
-        bg-slate-900/95 
-        backdrop-blur-2xl 
-        border border-purple-500/20
-        shadow-[0_0_60px_rgba(168,85,247,0.3)]
-        rounded-2xl
-      `,
-    },
-    layout: {
-      shimmer: true,
-      logoPlacement: "inside",
-      socialButtonsPlacement: "bottom",
-      socialButtonsVariant: "blockButton",
-      helpPageUrl: "/help",
-      privacyPageUrl: "/privacy",
-      termsPageUrl: "/terms",
-    },
-  }}
->
-  <html lang="en" suppressHydrationWarning>
-    <body className={`${inter.className} animated-background`}>
-      <Stars count={150} fallingCount={7} />
-      <ThemeProvider attribute="class" defaultTheme="dark">
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <Toaster richColors />
-        <Footer />
-      </ThemeProvider>
-    </body>
-  </html>
-</ClerkProvider>
-);
+  return (
+    <ClerkProvider
+      appearance={{
+        baseTheme: dark,
+        variables: {
+          colorPrimary: "#a855f7",
+          colorSuccess: "#22c55e",
+          colorDanger: "#ef4444",
+          colorWarning: "#f59e0b",
+          colorBackground: "transparent",
+          colorInputBackground: "rgba(30, 41, 59, 0.5)",
+          colorInputText: "#f8fafc",
+          borderRadius: "0.75rem",
+          colorShimmer: "rgba(168, 85, 247, 0.15)",
+          spacingUnit: "1rem",
+          fontFamily: inter.style.fontFamily,
+          fontSize: "0.875rem",
+        },
+        elements: {
+          card: `
+            bg-slate-900/90 backdrop-blur-2xl border border-slate-800/50
+            shadow-[0_0_50px_rgba(168,85,247,0.25)]
+            relative overflow-hidden p-5 sm:p-6 md:p-8 rounded-2xl
+            before:absolute before:inset-0 
+            before:bg-[radial-gradient(circle_at_top_left,_rgba(168,85,247,0.25),_transparent_60%)]
+            after:absolute after:inset-0 
+            after:bg-[radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.15),_transparent_60%)]
+            before:blur-3xl after:blur-3xl before:-z-10 after:-z-10
+            hover:shadow-[0_0_70px_rgba(168,85,247,0.4)]
+            transition-all duration-700
+          `,
+          rootBox: `
+            bg-transparent w-full max-w-md mx-auto relative
+            before:absolute before:inset-0
+            before:bg-[linear-gradient(45deg,rgba(168,85,247,0.05),rgba(59,130,246,0.05))]
+            before:rounded-[2rem]
+            before:animate-[pulse_6s_infinite]
+          `,
+          logoImage: `
+            brightness-110 w-16 h-16 sm:w-20 sm:h-20 mx-auto
+            rounded-2xl border border-purple-400/30
+            shadow-[0_0_25px_rgba(168,85,247,0.4)]
+            animate-[float_4s_ease-in-out_infinite]
+          `,
+          headerTitle: `
+            text-transparent bg-clip-text bg-gradient-to-r 
+            from-purple-400 via-pink-400 to-blue-400 font-extrabold 
+            text-3xl sm:text-4xl tracking-wide drop-shadow-[0_0_15px_rgba(168,85,247,0.3)]
+          `,
+          formButtonPrimary: `
+            relative group w-full py-2.5 sm:py-3 px-6
+            bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600
+            rounded-xl font-semibold text-white text-sm sm:text-base
+            shadow-[0_0_25px_rgba(168,85,247,0.35)]
+            hover:shadow-[0_0_35px_rgba(168,85,247,0.6)]
+            overflow-hidden
+            before:absolute before:inset-0 before:bg-gradient-to-r 
+            before:from-transparent before:via-white/25 before:to-transparent
+            before:translate-x-[-200%] hover:before:translate-x-[200%]
+            before:transition-transform before:duration-[1200ms]
+            transition-all duration-300
+            hover:scale-[1.03] active:scale-[0.97]
+          `,
+          formFieldInput: `
+            w-full pl-12 pr-4 py-2.5 sm:py-3 bg-slate-800/60 border border-slate-700/60
+            rounded-xl text-slate-100 placeholder:text-slate-500 text-sm sm:text-base
+            focus:outline-none focus:border-purple-500/70 focus:ring-2 focus:ring-purple-500/20
+            hover:border-purple-500/30 transition-all duration-300
+          `,
+          avatarBox: `
+            border-2 border-purple-500/40 ring-2 ring-purple-500/20
+            shadow-[0_0_30px_rgba(168,85,247,0.35)] rounded-full
+            animate-[pulse_5s_infinite]
+          `,
+          userButtonPopoverCard: `
+            bg-slate-900/95 backdrop-blur-2xl border border-purple-500/20
+            shadow-[0_0_40px_rgba(168,85,247,0.25)] rounded-2xl
+            p-3 animate-[fadeIn_0.6s_ease]
+          `,
+          organizationSwitcherPopoverCard: `
+            bg-slate-900/95 backdrop-blur-2xl border border-purple-500/20
+            shadow-[0_0_50px_rgba(168,85,247,0.25)]
+            rounded-2xl p-3
+          `,
+          modalContent: `
+            bg-slate-900/95 backdrop-blur-2xl border border-purple-500/20
+            shadow-[0_0_60px_rgba(168,85,247,0.4)]
+            rounded-2xl p-6 animate-[fadeIn_0.5s_ease-out]
+          `,
+          profileSection: `
+            border-t border-slate-800/50 relative
+            before:absolute before:inset-x-0 before:top-0 
+            before:h-[1px] before:bg-gradient-to-r 
+            before:from-transparent before:via-purple-500/30 before:to-transparent
+          `,
+          badge: `
+            bg-gradient-to-r from-purple-500/20 to-blue-500/20
+            border border-purple-400/40 text-purple-300
+            shadow-[0_0_15px_rgba(168,85,247,0.2)]
+            animate-[pulse_4s_infinite]
+          `,
+          spinner: `
+            text-purple-500 drop-shadow-[0_0_10px_rgba(168,85,247,0.7)]
+          `,
+        },
+        layout: {
+          shimmer: true,
+          logoPlacement: "inside",
+          socialButtonsPlacement: "bottom",
+          socialButtonsVariant: "blockButton",
+          helpPageUrl: "/help",
+          privacyPageUrl: "/privacy",
+          termsPageUrl: "/terms",
+        },
+      }}
+    >
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${inter.className} animated-background`}>
+          <Stars count={150} fallingCount={7} />
+          <ThemeProvider attribute="class" defaultTheme="dark">
+            <Header />
+            <main className="min-h-screen relative">
+              {/* Neon glow background overlay */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(168,85,247,0.08),transparent_60%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(59,130,246,0.08),transparent_60%)]" />
+              {children}
+            </main>
+            <Toaster richColors />
+            <Footer />
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
+  );
 }

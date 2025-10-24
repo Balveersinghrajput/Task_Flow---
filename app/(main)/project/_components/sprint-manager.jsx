@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,10 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { useCallback, useEffect, useState } from "react";
 
+import { format, formatDistanceToNow, isAfter, isBefore } from "date-fns";
 import { BarLoader } from "react-spinners";
-import { formatDistanceToNow, isAfter, isBefore, format } from "date-fns";
 
 import useFetch from "@/hooks/use-fetch";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -45,21 +45,32 @@ export default function SprintManager({
 
   const canEnd = status === "ACTIVE";
 
-  const handleStatusChange = async (newStatus) => {
-    updateStatus(sprint.id, newStatus);
-  };
+  const handleStatusChange = useCallback(async (newStatus) => {
+    console.log("Updating sprint status to:", newStatus);
+    try {
+      await updateStatus(sprint.id, newStatus);
+    } catch (err) {
+      console.error("Failed to update sprint:", err);
+    }
+  }, [sprint.id, updateStatus]);
 
   useEffect(() => {
-    if (updatedStatus && updatedStatus.success) {
+    if (updatedStatus?.success) {
+      console.log("Status update successful!");
       setStatus(updatedStatus.sprint.status);
       setSprint({
         ...sprint,
         status: updatedStatus.sprint.status,
       });
+      router.refresh();
     }
-  }, [updatedStatus, loading]);
+    
+    if (updatedStatus && !updatedStatus.success) {
+      console.error("Status update failed:", updatedStatus.error);
+    }
+  }, [updatedStatus, router, setSprint, sprint]);
 
-  const getStatusText = () => {
+  const getStatusText = useCallback(() => {
     if (status === "COMPLETED") {
       return `Sprint Ended`;
     }
@@ -70,7 +81,7 @@ export default function SprintManager({
       return `Starts in ${formatDistanceToNow(startDate)}`;
     }
     return null;
-  };
+  }, [status, endDate, startDate, now]);
 
   useEffect(() => {
     const sprintId = searchParams.get("sprint");
@@ -81,57 +92,72 @@ export default function SprintManager({
         setStatus(selectedSprint.status);
       }
     }
-  }, [searchParams, sprints]);
+  }, [searchParams, sprints, sprint.id, setSprint]);
 
-  const handleSprintChange = (value) => {
+  const handleSprintChange = useCallback((value) => {
     const selectedSprint = sprints.find((s) => s.id === value);
-    setSprint(selectedSprint);
-    setStatus(selectedSprint.status);
-    router.replace(`/project/${projectId}`, undefined, { shallow: true });
-  };
+    if (selectedSprint) {
+      setSprint(selectedSprint);
+      setStatus(selectedSprint.status);
+      router.replace(`/project/${projectId}`);
+    }
+  }, [sprints, setSprint, router, projectId]);
 
   return (
-    <>
-      <div className="flex justify-between items-center gap-4">
+    <div className="space-y-4 pointer-events-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <Select value={sprint.id} onValueChange={handleSprintChange}>
-          <SelectTrigger className="bg-slate-950 self-start">
+          <SelectTrigger className="bg-slate-950 self-start w-full sm:w-auto min-w-[250px] pointer-events-auto">
             <SelectValue placeholder="Select Sprint" />
           </SelectTrigger>
-          <SelectContent>
-            {sprints.map((sprint) => (
-              <SelectItem key={sprint.id} value={sprint.id}>
-                {sprint.name} ({format(sprint.startDate, "MMM d, yyyy")} to{" "}
-                {format(sprint.endDate, "MMM d, yyyy")})
+          <SelectContent className="pointer-events-auto">
+            {sprints.map((sprintItem) => (
+              <SelectItem key={sprintItem.id} value={sprintItem.id}>
+                {sprintItem.name} ({format(sprintItem.startDate, "MMM d, yyyy")} to{" "}
+                {format(sprintItem.endDate, "MMM d, yyyy")})
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        {canStart && (
-          <Button
-            onClick={() => handleStatusChange("ACTIVE")}
-            disabled={loading}
-            className="bg-green-900 text-white"
-          >
-            Start Sprint
-          </Button>
-        )}
-        {canEnd && (
-          <Button
-            onClick={() => handleStatusChange("COMPLETED")}
-            disabled={loading}
-            variant="destructive"
-          >
-            End Sprint
-          </Button>
-        )}
+        <div className="flex gap-2 w-full sm:w-auto">
+          {canStart && (
+            <Button
+              onClick={() => handleStatusChange("ACTIVE")}
+              disabled={loading}
+              className="bg-green-900 text-white hover:bg-green-800 flex-1 sm:flex-initial pointer-events-auto"
+            >
+              {loading ? "Starting..." : "Start Sprint"}
+            </Button>
+          )}
+          {canEnd && (
+            <Button
+              onClick={() => handleStatusChange("COMPLETED")}
+              disabled={loading}
+              variant="destructive"
+              className="flex-1 sm:flex-initial pointer-events-auto"
+            >
+              {loading ? "Ending..." : "End Sprint"}
+            </Button>
+          )}
+        </div>
       </div>
-      {loading && <BarLoader width={"100%"} className="mt-2" color="#36d7b7" />}
-      {getStatusText() && (
-        <Badge variant="" className="mt-3 ml-1 self-start">
+      
+      {loading && (
+        <BarLoader width={"100%"} className="mt-2" color="#36d7b7" />
+      )}
+      
+      {error && (
+        <Badge variant="destructive" className="mt-3 ml-1 self-start">
+          Error: {error.message || "Failed to update sprint"}
+        </Badge>
+      )}
+      
+      {getStatusText() && !error && (
+        <Badge className="mt-3 ml-1 self-start">
           {getStatusText()}
         </Badge>
       )}
-    </>
+    </div>
   );
 }
