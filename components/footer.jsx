@@ -42,33 +42,17 @@ import {
   Wrench,
   X
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 
 export const Footer = () => {
-  const [activeLink, setActiveLink] = useState(null);
+  const [hoveredLink, setHoveredLink] = useState(null);
   const [email, setEmail] = useState("");
-  const tooltipRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Newsletter subscription:", email);
     setEmail("");
-  };
-
-  // Close tooltip when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (tooltipRef.current && !tooltipRef.current.contains(event.target)) {
-        setActiveLink(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const toggleTooltip = (key) => {
-    setActiveLink(activeLink === key ? null : key);
   };
 
   const tooltipContent = {
@@ -170,116 +154,6 @@ export const Footer = () => {
     }
   };
 
-  const TooltipCard = ({ content, position = "right" }) => {
-    const positionClasses = {
-      right: "left-full top-0 ml-4 md:ml-4",
-      bottom: "bottom-full right-0 mb-3 left-auto md:right-0",
-      mobileBottom: "left-0 right-0 top-full mt-2"
-    };
-
-    const arrowClasses = {
-      right: "absolute right-full top-8 hidden md:block",
-      bottom: "absolute top-full right-8 hidden md:block",
-      mobileBottom: "absolute bottom-full left-8"
-    };
-
-    const arrowBorder = {
-      right: "w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-r-[10px] border-r-[#0a1628]/90",
-      bottom: "w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-[#0a1628]/90",
-      mobileBottom: "w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[10px] border-b-[#0a1628]/90"
-    };
-
-    return (
-      <>
-        {/* Mobile version - appears below */}
-        <div className={`md:hidden absolute ${positionClasses.mobileBottom} z-50 animate-in fade-in slide-in-from-top-2 duration-200 w-full max-w-xs`}>
-          <div className="relative bg-[#0a1628]/90 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-4">
-            <div className={arrowClasses.mobileBottom}>
-              <div className={arrowBorder.mobileBottom}></div>
-            </div>
-            
-            <div className="flex items-center gap-3 mb-3">
-              <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${content.color} bg-opacity-20 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0`}>
-                {(() => {
-                  const Icon = content.icon;
-                  return <Icon className="w-6 h-6 text-white" strokeWidth={1.5} />;
-                })()}
-              </div>
-              <h4 className="text-white font-bold text-sm">
-                {content.title}
-              </h4>
-            </div>
-            
-            <div className="space-y-1 max-h-64 overflow-y-auto">
-              {content.items.map((item, idx) => {
-                const ItemIcon = item.icon;
-                return (
-                  <a
-                    key={idx}
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/5 transition-all duration-200 group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-white/10 transition-all">
-                      <ItemIcon className="w-4 h-4 text-gray-300 group-hover:text-white transition-colors" strokeWidth={1.5} />
-                    </div>
-                    <span className="text-xs text-gray-300 group-hover:text-white transition-colors flex-1">
-                      {item.label}
-                    </span>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop version - appears on right or bottom */}
-        <div className={`hidden md:block absolute ${positionClasses[position]} z-50 animate-in fade-in slide-in-from-${position === 'bottom' ? 'bottom' : 'left'}-2 duration-200`}>
-          <div className="relative bg-[#0a1628]/90 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-4 w-64">
-            <div className={arrowClasses[position]}>
-              <div className={arrowBorder[position]}></div>
-            </div>
-            
-            <div className="flex items-center gap-3 mb-3">
-              <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${content.color} bg-opacity-20 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0`}>
-                {(() => {
-                  const Icon = content.icon;
-                  return <Icon className="w-6 h-6 text-white" strokeWidth={1.5} />;
-                })()}
-              </div>
-              <h4 className="text-white font-bold text-sm">
-                {content.title}
-              </h4>
-            </div>
-            
-            <div className="space-y-1">
-              {content.items.map((item, idx) => {
-                const ItemIcon = item.icon;
-                return (
-                  <a
-                    key={idx}
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/5 transition-all duration-200 group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-white/10 transition-all">
-                      <ItemIcon className="w-4 h-4 text-gray-300 group-hover:text-white transition-colors" strokeWidth={1.5} />
-                    </div>
-                    <span className="text-xs text-gray-300 group-hover:text-white transition-colors flex-1">
-                      {item.label}
-                    </span>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  };
-
   return (
     <footer className="relative mt-20 text-white overflow-visible">
       {/* Decorative background */}
@@ -308,46 +182,47 @@ export const Footer = () => {
               </p>
               {/* Social Links */}
               <div className="flex gap-3 pt-2">
-                {[
-                  {
-                    icon: "M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z",
-                    label: "Twitter",
-                    href: "https://x.com/Balveersin93270?t=jAkDFkpzepEXfSdnOln--g&s=09",
-                  },
-                  {
-                    icon: "M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z",
-                    label: "LinkedIn",
-                    href: "https://www.linkedin.com/in/balveersingh-rajput/",
-                  },
-                  {
-                    icon: "M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22",
-                    label: "GitHub",
-                    href: "https://github.com/BalveersinghRajput",
-                  },
-                ].map((social, i) => (
-                  <a
-                    key={i}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-lg bg-gray-800/50 hover:bg-blue-500/20 border border-gray-700 hover:border-blue-500/50 flex items-center justify-center transition-all duration-300 group"
-                    aria-label={social.label}
-                  >
-                    <svg
-                      className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={social.icon} />
-                    </svg>
-                  </a>
-                ))}
-              </div>
-            </div>
+  {[
+    {
+      icon: "M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z",
+      label: "Twitter",
+      href: "https://x.com/Balveersin93270?t=jAkDFkpzepEXfSdnOln--g&s=09",
+    },
+    {
+      icon: "M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z",
+      label: "LinkedIn",
+      href: "https://www.linkedin.com/in/balveersingh-rajput/",
+    },
+    {
+      icon: "M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22",
+      label: "GitHub",
+      href: "https://github.com/BalveersinghRajput",
+    },
+  ].map((social, i) => (
+    <a
+      key={i}
+      href={social.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-10 h-10 rounded-lg bg-gray-800/50 hover:bg-blue-500/20 border border-gray-700 hover:border-blue-500/50 flex items-center justify-center transition-all duration-300 group"
+      aria-label={social.label}
+    >
+      <svg
+        className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={social.icon} />
+      </svg>
+    </a>
+  ))}
+</div>
+</div>
+
 
             {/* Quick Links */}
-            <div className="relative" ref={tooltipRef}>
+            <div className="relative">
               <h3 className="text-lg font-bold mb-4 text-white">Quick Links</h3>
               <ul className="space-y-3">
                 {[
@@ -358,7 +233,7 @@ export const Footer = () => {
                 ].map((link, i) => (
                   <li key={i} className="relative">
                     {link.noTooltip ? (
-                      <a 
+                      <Link 
                         href={link.href}
                         className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 flex items-center gap-2 group"
                       >
@@ -368,10 +243,11 @@ export const Footer = () => {
                         <span className="group-hover:translate-x-1 transition-transform duration-200">
                           {link.label}
                         </span>
-                      </a>
+                      </Link>
                     ) : (
                       <button
-                        onClick={() => toggleTooltip(link.key)}
+                        onMouseEnter={() => setHoveredLink(link.key)}
+                        onMouseLeave={() => setHoveredLink(null)}
                         className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 flex items-center gap-2 group w-full text-left"
                       >
                         <svg className="w-4 h-4 text-blue-500 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -382,28 +258,73 @@ export const Footer = () => {
                         </span>
                       </button>
                     )}
-                    
-                    {activeLink === link.key && tooltipContent[link.key] && (
-                      <TooltipCard content={tooltipContent[link.key]} position="right" />
-                    )}
                   </li>
                 ))}
               </ul>
+              
+              {/* Tooltip Card for Quick Links */}
+              {hoveredLink && (hoveredLink === 'menu' || hoveredLink === 'tasks' || hoveredLink === 'profile') && tooltipContent[hoveredLink] && (
+                <div className="absolute left-full top-0 ml-4 z-50 animate-in fade-in slide-in-from-left-2 duration-200">
+                  <div className="relative bg-[#0a1628]/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-4 w-64">
+                    {/* Arrow */}
+                    <div className="absolute right-full top-8">
+                      <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-r-[10px] border-r-[#0a1628]/40"></div>
+                    </div>
+                    
+                    {/* Header with Icon */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${tooltipContent[hoveredLink].color} bg-opacity-20 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0`}>
+                        {(() => {
+                          const Icon = tooltipContent[hoveredLink].icon;
+                          return <Icon className="w-6 h-6 text-white" strokeWidth={1.5} />;
+                        })()}
+                      </div>
+                      <h4 className="text-white font-bold text-sm">
+                        {tooltipContent[hoveredLink].title}
+                      </h4>
+                    </div>
+                    
+                    {/* Items */}
+                    <div className="space-y-1">
+                      {tooltipContent[hoveredLink].items.map((item, idx) => {
+                        const ItemIcon = item.icon;
+                        return (
+                          <a
+                            key={idx}
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/5 transition-all duration-200 group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-white/10 transition-all">
+                              <ItemIcon className="w-4 h-4 text-gray-300 group-hover:text-white transition-colors" strokeWidth={1.5} />
+                            </div>
+                            <span className="text-xs text-gray-300 group-hover:text-white transition-colors flex-1">
+                              {item.label}
+                            </span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Support */}
-            <div className="relative" ref={tooltipRef}>
+            <div className="relative">
               <h3 className="text-lg font-bold mb-4 text-white">Support</h3>
               <ul className="space-y-3">
                 {[
                   { key: "contact", label: "Contact Us" },
                   { key: "help", label: "Help Center" },
                   { key: "faqs", label: "FAQs" },
-                  { key: "privacy", label: "Privacy Policy" }
+                  { key: "privacySupport", label: "Privacy Policy" }
                 ].map((link, i) => (
                   <li key={i} className="relative">
                     <button
-                      onClick={() => toggleTooltip(link.key)}
+                      onMouseEnter={() => setHoveredLink(link.key)}
+                      onMouseLeave={() => setHoveredLink(null)}
                       className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 flex items-center gap-2 group w-full text-left"
                     >
                       <svg className="w-4 h-4 text-blue-500 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -413,13 +334,57 @@ export const Footer = () => {
                         {link.label}
                       </span>
                     </button>
-                    
-                    {activeLink === link.key && tooltipContent[link.key] && (
-                      <TooltipCard content={tooltipContent[link.key]} position="right" />
-                    )}
                   </li>
                 ))}
               </ul>
+              
+              {/* Tooltip Card for Support */}
+              {hoveredLink && (hoveredLink === 'contact' || hoveredLink === 'help' || hoveredLink === 'faqs' || hoveredLink === 'privacySupport') && tooltipContent[hoveredLink === 'privacySupport' ? 'privacy' : hoveredLink] && (
+                <div className="absolute left-full top-0 ml-4 z-50 animate-in fade-in slide-in-from-left-2 duration-200">
+                  <div className="relative bg-[#0a1628]/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-4 w-64">
+                    {/* Arrow */}
+                    <div className="absolute right-full top-8">
+                      <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-r-[10px] border-r-[#0a1628]/40"></div>
+                    </div>
+                    
+                    {/* Header with Icon */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${tooltipContent[hoveredLink === 'privacySupport' ? 'privacy' : hoveredLink].color} bg-opacity-20 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0`}>
+                        {(() => {
+                          const Icon = tooltipContent[hoveredLink === 'privacySupport' ? 'privacy' : hoveredLink].icon;
+                          return <Icon className="w-6 h-6 text-white" strokeWidth={1.5} />;
+                        })()}
+                      </div>
+                      <h4 className="text-white font-bold text-sm">
+                        {tooltipContent[hoveredLink === 'privacySupport' ? 'privacy' : hoveredLink].title}
+                      </h4>
+                    </div>
+                    
+                    {/* Items */}
+                    <div className="space-y-1">
+                      {tooltipContent[hoveredLink === 'privacySupport' ? 'privacy' : hoveredLink].items.map((item, idx) => {
+                        const ItemIcon = item.icon;
+                        return (
+                          <a
+                            key={idx}
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/5 transition-all duration-200 group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-white/10 transition-all">
+                              <ItemIcon className="w-4 h-4 text-gray-300 group-hover:text-white transition-colors" strokeWidth={1.5} />
+                            </div>
+                            <span className="text-xs text-gray-300 group-hover:text-white transition-colors flex-1">
+                              {item.label}
+                            </span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Newsletter */}
@@ -473,25 +438,69 @@ export const Footer = () => {
               </span>
             </div>
 
-            <div className="flex gap-4 md:gap-6 text-xs text-gray-500 relative" ref={tooltipRef}>
+            <div className="flex gap-6 text-xs text-gray-500 relative">
               {[
                 { key: "terms", label: "Terms" },
                 { key: "privacy", label: "Privacy" },
                 { key: "cookies", label: "Cookies" }
               ].map((link, i) => (
-                <div key={i} className="relative">
-                  <button 
-                    onClick={() => toggleTooltip(link.key)}
-                    className="hover:text-blue-400 transition-colors"
-                  >
-                    {link.label}
-                  </button>
-                  
-                  {activeLink === link.key && tooltipContent[link.key] && (
-                    <TooltipCard content={tooltipContent[link.key]} position="bottom" />
-                  )}
-                </div>
+                <button 
+                  key={i}
+                  onMouseEnter={() => setHoveredLink(link.key)}
+                  onMouseLeave={() => setHoveredLink(null)}
+                  className="hover:text-blue-400 transition-colors"
+                >
+                  {link.label}
+                </button>
               ))}
+              
+              {/* Floating Tooltip Card for bottom links only */}
+              {(hoveredLink === 'terms' || hoveredLink === 'privacy' || hoveredLink === 'cookies') && tooltipContent[hoveredLink] && (
+                <div className="absolute bottom-full right-0 mb-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div className="relative bg-[#0a1628]/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-4 w-64">
+                    {/* Arrow */}
+                    <div className="absolute top-full right-8">
+                      <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-[#0a1628]/40"></div>
+                    </div>
+                    
+                    {/* Header with Icon */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${tooltipContent[hoveredLink].color} bg-opacity-20 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0`}>
+                        {(() => {
+                          const Icon = tooltipContent[hoveredLink].icon;
+                          return <Icon className="w-6 h-6 text-white" strokeWidth={1.5} />;
+                        })()}
+                      </div>
+                      <h4 className="text-white font-bold text-sm">
+                        {tooltipContent[hoveredLink].title}
+                      </h4>
+                    </div>
+                    
+                    {/* Items */}
+                    <div className="space-y-1">
+                      {tooltipContent[hoveredLink].items.map((item, idx) => {
+                        const ItemIcon = item.icon;
+                        return (
+                          <a
+                            key={idx}
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/5 transition-all duration-200 group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-white/10 transition-all">
+                              <ItemIcon className="w-4 h-4 text-gray-300 group-hover:text-white transition-colors" strokeWidth={1.5} />
+                            </div>
+                            <span className="text-xs text-gray-300 group-hover:text-white transition-colors flex-1">
+                              {item.label}
+                            </span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
