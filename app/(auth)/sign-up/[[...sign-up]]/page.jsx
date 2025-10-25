@@ -41,7 +41,6 @@ export default function CustomSignUpPage() {
       // If sign up is complete, proceed
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        // Redirect to onboarding - middleware will handle org check
         router.push("/onboarding");
         return;
       }
@@ -59,7 +58,6 @@ export default function CustomSignUpPage() {
           } catch (verifyError) {
             console.error("Email verification preparation error:", verifyError);
             
-            // Check if it's a strategy error
             if (verifyError.errors?.[0]?.code === "form_param_value_invalid") {
               setError("Email verification is configured differently. Please contact support or use Google sign-in.");
             } else {
@@ -67,7 +65,6 @@ export default function CustomSignUpPage() {
             }
           }
         } else {
-          // Try to complete without verification
           try {
             await setActive({ session: result.createdSessionId });
             router.push("/onboarding");
@@ -127,7 +124,7 @@ export default function CustomSignUpPage() {
     
     try {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-      setError(""); // Clear any previous errors
+      setError("");
     } catch (err) {
       console.error("Resend error:", err);
       setError("Failed to resend code. Please try again.");
@@ -149,6 +146,9 @@ export default function CustomSignUpPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 relative bg-slate-950">
+      {/* CAPTCHA Container - ADD THIS */}
+      <div id="clerk-captcha" className="hidden"></div>
+
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 sm:top-20 sm:left-20 w-64 h-64 sm:w-96 sm:h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>

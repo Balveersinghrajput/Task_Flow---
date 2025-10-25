@@ -222,45 +222,36 @@ export default function SprintBoard({ sprints, projectId, orgId }) {
                         ?.filter((issue) => issue.status === column.key)
                         .map((issue, index) => (
                           <Draggable
-  key={issue.id}
-  draggableId={issue.id}
-  index={index}
-  isDragDisabled={updateIssuesLoading}
->
-  {(provided, snapshot) => {
-    const style = {
-      ...provided.draggableProps.style,
-      ...(snapshot.isDragging && {
-        transform: `${provided.draggableProps.style?.transform || ''}`
-      })
-    };
-    
-    return (
-      <div
-        ref={provided.innerRef}
-        {...provided.draggableProps}
-        {...provided.dragHandleProps}
-        style={style}
-        className={`${
-          snapshot.isDragging ? "opacity-100 shadow-2xl cursor-grabbing" : "cursor-grab"
-        }`}
-      >
-        <IssueCard
-          issue={issue}
-          onDelete={() => fetchIssues(currentSprint.id)}
-          onUpdate={(updated) =>
-            setIssues((issues) =>
-              issues.map((issue) => {
-                if (issue.id === updated.id) return updated;
-                return issue;
-              })
-            )
-          }
-        />
-      </div>
-    );
-  }}
-</Draggable>
+                            key={issue.id}
+                            draggableId={issue.id}
+                            index={index}
+                            isDragDisabled={updateIssuesLoading}
+                          >
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={provided.draggableProps.style}
+                                className={`${
+                                  snapshot.isDragging ? "opacity-100 shadow-2xl cursor-grabbing" : "cursor-grab"
+                                }`}
+                              >
+                                <IssueCard
+                                  issue={issue}
+                                  onDelete={() => fetchIssues(currentSprint.id)}
+                                  onUpdate={(updated) =>
+                                    setIssues((issues) =>
+                                      issues.map((issue) => {
+                                        if (issue.id === updated.id) return updated;
+                                        return issue;
+                                      })
+                                    )
+                                  }
+                                />
+                              </div>
+                            )}
+                          </Draggable>
                         ))}
                       {provided.placeholder}
                       {column.key === "TODO" &&

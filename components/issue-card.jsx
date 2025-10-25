@@ -8,9 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import IssueDetailsDialog from "./issue-details-dialog";
 import UserAvatar from "./user-avatar";
 
@@ -29,6 +28,21 @@ const priorityDeadlineDays = {
   URGENT: 1,
 };
 
+// Helper function to format time ago
+const formatTimeAgo = (date) => {
+  if (!date) return 'Unknown';
+  const now = new Date();
+  const past = new Date(date);
+  const diffInSeconds = Math.floor((now - past) / 1000);
+  
+  if (diffInSeconds < 60) return 'just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+  return `${Math.floor(diffInSeconds / 31536000)} years ago`;
+};
+
 export default function IssueCard({
   issue,
   showStatus = false,
@@ -38,7 +52,15 @@ export default function IssueCard({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isOverdue, setIsOverdue] = useState(false);
+  const [sprintStatus, setSprintStatus] = useState('no-sprint');
+  const intervalRef = useRef(null);
   const router = useRouter();
+
+  // Extract primitive values for dependencies
+  const sprintStartDate = issue?.sprint?.startDate;
+  const sprintEndDate = issue?.sprint?.endDate;
+  const createdAt = issue?.createdAt;
+  const priority = issue?.priority;
 
   // Ensure issue data is safe to use
   const safeIssue = issue ? {
@@ -50,7 +72,11 @@ export default function IssueCard({
     createdAt: issue.createdAt,
     projectId: issue.projectId,
     sprintId: issue.sprintId,
-    sprint: issue.sprint || null,
+    sprint: issue.sprint ? {
+      startDate: issue.sprint.startDate,
+      endDate: issue.sprint.endDate,
+      status: issue.sprint.status
+    } : null,
     assignee: issue.assignee ? {
       id: issue.assignee.id,
       name: issue.assignee.name || 'Unknown',
@@ -65,52 +91,82 @@ export default function IssueCard({
     } : null
   } : null;
 
-  // Calculate deadline - prioritize sprint end date, fallback to priority-based
-  const getDeadline = () => {
-    // First, try to use sprint end date
-    if (safeIssue?.sprint?.endDate) {
-      return new Date(safeIssue.sprint.endDate);
-    }
-    
-    // Fallback to priority-based deadline
-    if (!safeIssue?.createdAt || !safeIssue?.priority) return null;
-    const created = new Date(safeIssue.createdAt);
-    const daysToAdd = priorityDeadlineDays[safeIssue.priority] || 7;
-    return new Date(created.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
-  };
-
   // Real-time countdown timer effect
   useEffect(() => {
-    const deadline = getDeadline();
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    if (!safeIssue) return;
+
+    const now = new Date();
+    
+    // Check if issue has a sprint
+    if (!sprintStartDate && !sprintEndDate) {
+      setSprintStatus('no-sprint');
+      return;
+    }
+
+    const sprintStart = sprintStartDate ? new Date(sprintStartDate) : null;
+    const sprintEnd = sprintEndDate ? new Date(sprintEndDate) : null;
+
+    // If sprint hasn't started, don't show timer
+    if (sprintStart && now < sprintStart) {
+      setSprintStatus('not-started');
+      return;
+    }
+
+    // Sprint is active, show timer to deadline
+    setSprintStatus('active');
+    
+    // Calculate deadline - prioritize sprint end date, fallback to priority-based
+    let deadline;
+    if (sprintEnd) {
+      deadline = sprintEnd;
+    } else if (createdAt && priority) {
+      const created = new Date(createdAt);
+      const daysToAdd = priorityDeadlineDays[priority] || 7;
+      deadline = new Date(created.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+    }
+
     if (!deadline) return;
 
     const calculateTimeRemaining = () => {
-      const now = new Date();
-      const diff = deadline - now;
+      const currentTime = new Date();
+      const diff = deadline - currentTime;
 
       if (diff <= 0) {
-        setIsOverdue(true);
         const overdueDiff = Math.abs(diff);
         const days = Math.floor(overdueDiff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((overdueDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((overdueDiff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((overdueDiff % (1000 * 60)) / 1000);
+        
+        setIsOverdue(true);
         setTimeRemaining({ days, hours, minutes, seconds });
       } else {
-        setIsOverdue(false);
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        setIsOverdue(false);
         setTimeRemaining({ days, hours, minutes, seconds });
       }
     };
 
     calculateTimeRemaining();
-    const interval = setInterval(calculateTimeRemaining, 1000);
+    intervalRef.current = setInterval(calculateTimeRemaining, 1000);
 
-    return () => clearInterval(interval);
-  }, [safeIssue?.createdAt, safeIssue?.priority, safeIssue?.sprint?.endDate]);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [sprintStartDate, sprintEndDate, createdAt, priority]);
 
   if (!safeIssue) {
     return null;
@@ -126,9 +182,44 @@ export default function IssueCard({
     onUpdate(...params);
   };
 
-  const created = safeIssue.createdAt ? formatDistanceToNow(new Date(safeIssue.createdAt), {
-    addSuffix: true,
-  }) : 'Unknown';
+  const created = formatTimeAgo(safeIssue.createdAt);
+
+  // Render timer based on sprint status
+  const renderTimer = () => {
+    // Don't show timer if no sprint or sprint not started
+    if (sprintStatus !== 'active') {
+      return null;
+    }
+
+    return (
+      <div className={`flex flex-col items-end gap-0.5 text-[10px] sm:text-xs font-mono flex-shrink-0 ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-600'}`}>
+        {isOverdue && (
+          <div className="flex items-center gap-1">
+            <span className="text-xs sm:text-sm">⚠️</span>
+            <span className="font-semibold text-[9px] sm:text-[10px]">OVERDUE</span>
+          </div>
+        )}
+        
+        <div className="flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
+          {timeRemaining.days > 0 && (
+            <>
+              <span className="font-semibold">{timeRemaining.days}</span>
+              <span className="text-[8px] sm:text-[10px]">d</span>
+              <span>:</span>
+            </>
+          )}
+          <span>{String(timeRemaining.hours).padStart(2, '0')}</span>
+          <span className="text-[8px] sm:text-[10px]">h</span>
+          <span>:</span>
+          <span>{String(timeRemaining.minutes).padStart(2, '0')}</span>
+          <span className="text-[8px] sm:text-[10px]">m</span>
+          <span className="hidden sm:inline">:</span>
+          <span className="hidden sm:inline">{String(timeRemaining.seconds).padStart(2, '0')}</span>
+          <span className="hidden sm:inline text-[8px] sm:text-[10px]">s</span>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -139,34 +230,14 @@ export default function IssueCard({
         <CardHeader
           className={`border-t-2 ${priorityColor[safeIssue.priority]} rounded-lg px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-4`}
         >
-          <div className="flex items-start justify-between gap-2 mt-1">
+          <div className="flex items-start justify-between gap-2">
             {/* Title - responsive text sizing */}
-            <CardTitle className="flex-1 text-sm sm:text-base md:text-lg lg:text-xl line-clamp-2 break-words pr-2">
+            <CardTitle className="flex-1 text-sm sm:text-base md:text-lg lg:text-xl line-clamp-2 break-words pr-2 min-w-0">
               {safeIssue.title}
             </CardTitle>
             
-            {/* Timer - responsive display */}
-            <div className={`flex flex-col sm:flex-row items-end sm:items-center gap-0.5 sm:gap-1 text-[9px] xs:text-[10px] sm:text-xs font-mono whitespace-nowrap flex-shrink-0 ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
-              {/* Warning icon */}
-              {isOverdue && <span className="text-xs sm:text-sm">⚠</span>}
-              
-              {/* Timer display - stacked on mobile, inline on desktop */}
-              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-0 sm:gap-1">
-                {/* Days (only if > 0) */}
-                {timeRemaining.days > 0 && (
-                  <span className="hidden xs:inline">{timeRemaining.days}d</span>
-                )}
-                
-                {/* Time display - compact on mobile */}
-                <div className="flex items-center gap-0.5 sm:gap-1">
-                  <span>{String(timeRemaining.hours).padStart(2, '0')}h</span>
-                  <span className="hidden xs:inline">:</span>
-                  <span>{String(timeRemaining.minutes).padStart(2, '0')}m</span>
-                  <span className="hidden sm:inline">:</span>
-                  <span className="hidden sm:inline">{String(timeRemaining.seconds).padStart(2, '0')}s</span>
-                </div>
-              </div>
-            </div>
+            {/* Timer - only show if sprint is active */}
+            {renderTimer()}
           </div>
         </CardHeader>
 
@@ -183,6 +254,16 @@ export default function IssueCard({
           >
             {safeIssue.priority}
           </Badge>
+          
+          {/* Sprint status badge - only show if sprint exists but not started */}
+          {sprintStatus === 'not-started' && (
+            <Badge 
+              variant="outline" 
+              className="text-[10px] xs:text-xs sm:text-sm px-1.5 py-0.5 sm:px-2 sm:py-1 border-blue-400 text-blue-600"
+            >
+              Sprint Not Started
+            </Badge>
+          )}
         </CardContent>
 
         {/* Footer - responsive spacing */}
