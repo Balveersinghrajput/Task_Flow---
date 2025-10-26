@@ -28,7 +28,7 @@ const features = [
   {
     title: "Comprehensive Reporting",
     description:
-      "Gain insights into your team's performance with detailed, customizable reports and analytics.",
+      "Gain insights into your team&apos;s performance with detailed, customizable reports and analytics.",
     icon: BarChart,
   },
 ];
@@ -67,7 +67,7 @@ export default function Home() {
           </h1>
 
           <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-400 mb-8 sm:mb-10 md:mb-12 max-w-3xl mx-auto leading-relaxed px-4">
-            Simplify task management and boost your team's productivity.
+            Simplify task management and boost your team&apos;s productivity.
             <br className="hidden sm:block" />
             <span className="text-blue-400 font-medium">
               Collaborate, plan, and execute projects seamlessly — all in one place.
