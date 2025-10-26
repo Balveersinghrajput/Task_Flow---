@@ -55,7 +55,7 @@ export default function SprintManager({
   }, [sprint.id, updateStatus]);
 
   useEffect(() => {
-    if (updatedStatus?.success) {
+    if (updatedStatus && updatedStatus.success) {
       console.log("Status update successful!");
       setStatus(updatedStatus.sprint.status);
       setSprint({
@@ -70,18 +70,20 @@ export default function SprintManager({
     }
   }, [updatedStatus, router, setSprint, sprint]);
 
-  const getStatusText = useCallback(() => {
+  const getStatusText = () => {
+    const currentNow = new Date();
+    
     if (status === "COMPLETED") {
       return `Sprint Ended`;
     }
-    if (status === "ACTIVE" && isAfter(now, endDate)) {
+    if (status === "ACTIVE" && isAfter(currentNow, endDate)) {
       return `Overdue by ${formatDistanceToNow(endDate)}`;
     }
-    if (status === "PLANNED" && isBefore(now, startDate)) {
+    if (status === "PLANNED" && isBefore(currentNow, startDate)) {
       return `Starts in ${formatDistanceToNow(startDate)}`;
     }
     return null;
-  }, [status, endDate, startDate, now]);
+  };
 
   useEffect(() => {
     const sprintId = searchParams.get("sprint");
