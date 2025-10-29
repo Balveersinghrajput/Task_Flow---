@@ -146,7 +146,7 @@ export default function SprintManager({
       </div>
       
       {loading && (
-        <BarLoader width={"100%"} className="mt-2" color="#36d7b7" />
+        <BarLoader width={"100%"} className="mt-2" color="#49a2f0" />
       )}
       
       {error && (
